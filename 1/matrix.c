@@ -6,10 +6,10 @@
 #include "matrix.h"
 #include "row.h"
 
-Err print_matrix(Matrix *matrix){
-    if(matrix == NULL) {
-        return ERR_NULL;
-    }
+Err print_matrix(const Matrix *matrix){
+    if(matrix == NULL){
+		return ERR_NULL;
+	}
 	printf("Матрица: \n");
     for(size_t i = 0; i < matrix->rows_count; i++) {
         for(size_t j = 0; j < matrix->row[i].len; j++){
@@ -20,53 +20,39 @@ Err print_matrix(Matrix *matrix){
     return ERR_OK;
 }
 
-Err fill_row_for_matrix(Matrix **matrix){
-    Row *res_array = input_row((*matrix)->rows_count);
-    if(res_array == NULL){
-        return ERR_NULL;
-    }
-    for(size_t i = 0; i < (*matrix)->rows_count; i++){
+Matrix *fill_row_for_matrix(Matrix *matrix){
+	if(matrix == NULL){
+		return NULL;
+	}
+    for(size_t i = 0; i < matrix->rows_count; i++){
         printf("Введите количество элементов строки %zu > ", i + 1);
         size_t len = 0;
         if(check_error_for_st(&len, 0, INT_MAX) == END_PROGRAM){
-			free_row(res_array);
-			return END_PROGRAM;
+			return NULL;
 		}
-        (*matrix)->row[i].numbers = (float*)realloc(((*matrix)->row)[i].numbers, len * sizeof(float));
-		(*matrix)->row[i].len = len;
-        if((*matrix)->row[i].numbers == NULL){
-            printf("Ошибка выделения памяти\n");
-			free_row(res_array);
-            return ERR_NULL;
+        matrix->row[i].numbers = (float*)realloc(matrix->row[i].numbers, len * sizeof(float));
+		matrix->row[i].len = len;
+        if(matrix->row[i].numbers == NULL){
+            return NULL;
         }
-        float average_value = 0;
-        float max = -1e10;
         for(size_t j = 0; j < len; j++){
             printf("%zu = ", j + 1);
-            if(check_error_for_float(&((*matrix)->row[i].numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
-                return END_PROGRAM;
+            if(check_error_for_float(&(matrix->row[i].numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
+                return NULL;
             }
-            average_value += (*matrix)->row[i].numbers[j];
-            if((*matrix)->row[i].numbers[j] > max){
-                max = (*matrix)->row[i].numbers[j];
-            }
-        }
-        average_value /= (float)len;
-        fill_row_for_res_array(res_array, max, average_value, i);
+	    }
     }
-    print_matrix(*matrix);
-    print_res_array(res_array);
-    free_row(res_array);
-    return ERR_OK;
+    return matrix;
 }
 
+
 Matrix *create_matrix(const size_t len){
-    Matrix *matrix = calloc(1, sizeof(Matrix));
+    Matrix *matrix = (Matrix*)calloc(1, sizeof(Matrix));
     if(matrix == NULL){
         return NULL;
     }
     matrix->rows_count = len;
-    matrix->row = calloc(len, sizeof(Row));
+    matrix->row = (Row*)calloc(len, sizeof(Row));
     if(matrix->row == NULL){
         free(matrix);
         return NULL;
@@ -93,5 +79,11 @@ Matrix *input_matrix(){
     printf("Введите количество строк матрицы > ");
     if(check_error_for_st(&len, 0, INT_MAX) == END_PROGRAM) return NULL;
     Matrix *matrix = create_matrix(len);
+    Matrix *changed_matrix = fill_row_for_matrix(matrix);
+	if(changed_matrix == NULL){
+		printf("Ошибка при заполнении матрицы\n");
+		free_matrix(matrix);
+		return NULL;
+	}
     return matrix;
 }
