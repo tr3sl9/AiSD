@@ -7,9 +7,8 @@ typedef struct Row {
 	float *numbers;
 } Row;
 
-Err print_res_array(Row *);
-Err fill_row_for_res_array(Row *, const float, const float, const size_t);
+Err print_res_array(const Row *);
 Row *create_row(const size_t);
 void free_row(Row *);
-Row *input_row(size_t rows_count);
+Row *input_row(const size_t);
 #endif

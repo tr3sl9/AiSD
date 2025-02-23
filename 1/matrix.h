@@ -8,8 +8,8 @@ typedef struct Matrix {
 	Row *row;
 } Matrix;
 
-Err print_matrix(Matrix *);
-Err fill_row_for_matrix(Matrix **);
+Err print_matrix(const Matrix *);
+Matrix *fill_row_for_matrix(Matrix *);
 Matrix *create_matrix(const size_t);
 void free_matrix(Matrix *);
 Matrix *input_matrix();

@@ -4,15 +4,27 @@
 #include "testing.h"
 #include "matrix.h"
 #include "row.h"
-#include "matrix.h"
+#include "individual.h"
 
 int main(){
     Matrix *matrix = input_matrix();
     if(matrix == NULL){
-        printf("Ошибка при создании матрицы.\n");
+        printf("Ошибка при создании матрицы\n");
         return 1;
     }
-    fill_row_for_matrix(&matrix);
+	Row *res_array = input_row(matrix->rows_count);
+	if(res_array == NULL){
+		printf("Ошибка при создании результирующей строки\n");
+		return 1;
+	}
+	res_array = calculating_average(matrix, res_array);
+	if(res_array == NULL){
+		printf("Ошибка при создании результирующей строки\n");
+		return 1;
+	}
+	print_matrix(matrix);
+	print_res_array(res_array);
     free_matrix(matrix);
+	free_row(res_array);
     return 0;
 }
