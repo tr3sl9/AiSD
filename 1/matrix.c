@@ -61,19 +61,22 @@ Matrix *input_matrix(){
 			free_matrix(matrix);
 			return NULL;
 		}
-        matrix->row[i].numbers = (float*)realloc(matrix->row[i].numbers, len * sizeof(float));
+	    matrix->row[i].numbers = (float*)realloc(matrix->row[i].numbers, len * sizeof(float));
 		matrix->row[i].len = len;
         if(matrix->row[i].numbers == NULL){
 			free_matrix(matrix);
             return NULL;
         }
-        for(size_t j = 0; j < len; j++){
+		if(input_row(&(matrix->row[i])) != ERR_OK){
+			free_matrix(matrix);
+			return NULL;
+		}	
+/*        for(size_t j = 0; j < len; j++){
             printf("%zu = ", j + 1);
             if(check_error_for_float(&(matrix->row[i].numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
 				free_matrix(matrix);
                 return NULL;
             }
-	    }
-    }
+*/	}
     return matrix;
 }
