@@ -3,6 +3,6 @@
 #include "matrix.h"
 #include "row.h"
 
-Row *calculating_average(Matrix *, Row *);
+Row *calculating_average(Matrix *);
 
 #endif

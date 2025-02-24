@@ -9,7 +9,6 @@ typedef struct Matrix {
 } Matrix;
 
 Err print_matrix(const Matrix *);
-Matrix *fill_row_for_matrix(Matrix *);
 Matrix *create_matrix(const size_t);
 void free_matrix(Matrix *);
 Matrix *input_matrix();

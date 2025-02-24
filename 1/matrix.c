@@ -20,32 +20,6 @@ Err print_matrix(const Matrix *matrix){
     return ERR_OK;
 }
 
-Matrix *fill_row_for_matrix(Matrix *matrix){
-	if(matrix == NULL){
-		return NULL;
-	}
-    for(size_t i = 0; i < matrix->rows_count; i++){
-        printf("Введите количество элементов строки %zu > ", i + 1);
-        size_t len = 0;
-        if(check_error_for_st(&len, 0, INT_MAX) == END_PROGRAM){
-			return NULL;
-		}
-        matrix->row[i].numbers = (float*)realloc(matrix->row[i].numbers, len * sizeof(float));
-		matrix->row[i].len = len;
-        if(matrix->row[i].numbers == NULL){
-            return NULL;
-        }
-        for(size_t j = 0; j < len; j++){
-            printf("%zu = ", j + 1);
-            if(check_error_for_float(&(matrix->row[i].numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
-                return NULL;
-            }
-	    }
-    }
-    return matrix;
-}
-
-
 Matrix *create_matrix(const size_t len){
     Matrix *matrix = (Matrix*)calloc(1, sizeof(Matrix));
     if(matrix == NULL){
@@ -79,11 +53,27 @@ Matrix *input_matrix(){
     printf("Введите количество строк матрицы > ");
     if(check_error_for_st(&len, 0, INT_MAX) == END_PROGRAM) return NULL;
     Matrix *matrix = create_matrix(len);
-    Matrix *changed_matrix = fill_row_for_matrix(matrix);
-	if(changed_matrix == NULL){
-		printf("Ошибка при заполнении матрицы\n");
-		free_matrix(matrix);
-		return NULL;
-	}
+	if(matrix == NULL) return NULL;
+    for(size_t i = 0; i < matrix->rows_count; i++){
+        printf("Введите количество элементов строки %zu > ", i + 1);
+        size_t len = 0;
+        if(check_error_for_st(&len, 0, INT_MAX) == END_PROGRAM){
+			free_matrix(matrix);
+			return NULL;
+		}
+        matrix->row[i].numbers = (float*)realloc(matrix->row[i].numbers, len * sizeof(float));
+		matrix->row[i].len = len;
+        if(matrix->row[i].numbers == NULL){
+			free_matrix(matrix);
+            return NULL;
+        }
+        for(size_t j = 0; j < len; j++){
+            printf("%zu = ", j + 1);
+            if(check_error_for_float(&(matrix->row[i].numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
+				free_matrix(matrix);
+                return NULL;
+            }
+	    }
+    }
     return matrix;
 }
