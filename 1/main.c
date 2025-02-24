@@ -12,14 +12,10 @@ int main(){
         printf("Ошибка при создании матрицы\n");
         return 1;
     }
-	Row *res_array = input_row(matrix->rows_count);
+	Row *res_array = calculating_average(matrix);
 	if(res_array == NULL){
 		printf("Ошибка при создании результирующей строки\n");
-		return 1;
-	}
-	res_array = calculating_average(matrix, res_array);
-	if(res_array == NULL){
-		printf("Ошибка при создании результирующей строки\n");
+		free_matrix(matrix);
 		return 1;
 	}
 	print_matrix(matrix);

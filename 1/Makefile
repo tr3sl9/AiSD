@@ -6,7 +6,7 @@ TARGET=a
 clean :
 	rm -rv a
 
-$(TARGET) : $(OBJ)/main.o $(OBJ)/testing.o $(OBJ)/row.o $(OBJ)/matrix.o $(OBJ)/individual.0
+$(TARGET) : $(OBJ)/main.o $(OBJ)/testing.o $(OBJ)/row.o $(OBJ)/matrix.o $(OBJ)/individual.o
 	$(CC) -o $@ $^ $(CFLAGS)
 
 $(OBJ)/%.o : %.c

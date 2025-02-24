@@ -35,13 +35,3 @@ void free_row(Row *res_array){
         free(res_array);
     }
 }
-
-Row *input_row(const size_t len){
-    Row *res_array = create_row(len);
-	if(res_array == NULL){
-		printf("Ошибка при создании результирующей строки\n");
-		free_row(res_array);
-		return NULL;
-	}
-    return res_array;
-}

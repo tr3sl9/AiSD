@@ -10,5 +10,4 @@ typedef struct Row {
 Err print_res_array(const Row *);
 Row *create_row(const size_t);
 void free_row(Row *);
-Row *input_row(const size_t);
 #endif
