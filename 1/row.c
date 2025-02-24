@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
+#include <float.h>
 #include <stdint.h>
 #include "row.h"
 #include "individual.h"
+#include "testing.h"
 
 Err print_res_array(const Row *res_array){
     if(res_array == NULL){
@@ -34,4 +36,14 @@ void free_row(Row *res_array){
         }
         free(res_array);
     }
+}
+
+Err input_row(Row *row){
+	for(size_t j = 0; j < row->len; j++){
+		printf("%zu = ", j + 1);
+		if(check_error_for_float(&(row->numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
+			return END_PROGRAM;
+		}
+	}
+	return ERR_OK;
 }
