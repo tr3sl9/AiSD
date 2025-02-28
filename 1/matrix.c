@@ -2,15 +2,18 @@
 #include <limits.h>
 #include <float.h>
 #include <stdlib.h>
+#include <string.h>
 #include "testing.h"
 #include "matrix.h"
 #include "row.h"
+
+#define PROMPTM "Матрица: \n"
 
 Err print_matrix(const Matrix *matrix){
     if(matrix == NULL){
 		return ERR_NULL;
 	}
-	printf("Матрица: \n");
+	printf(PROMPTM);
     for(size_t i = 0; i < matrix->rows_count; i++) {
         for(size_t j = 0; j < matrix->row[i].len; j++){
             printf("%f ", matrix->row[i].numbers[j]);
@@ -61,22 +64,13 @@ Matrix *input_matrix(){
 			free_matrix(matrix);
 			return NULL;
 		}
-	    matrix->row[i].numbers = (float*)realloc(matrix->row[i].numbers, len * sizeof(float));
-		matrix->row[i].len = len;
-        if(matrix->row[i].numbers == NULL){
-			free_matrix(matrix);
-            return NULL;
-        }
-		if(input_row(&(matrix->row[i])) != ERR_OK){
+		Row *row = input_row(len);
+		if(row == NULL){
 			free_matrix(matrix);
 			return NULL;
-		}	
-/*        for(size_t j = 0; j < len; j++){
-            printf("%zu = ", j + 1);
-            if(check_error_for_float(&(matrix->row[i].numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
-				free_matrix(matrix);
-                return NULL;
-            }
-*/	}
+		}
+		memcpy(matrix->row + i, row, sizeof(Row));
+		free(row);
+	}
     return matrix;
 }

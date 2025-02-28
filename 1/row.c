@@ -7,11 +7,13 @@
 #include "individual.h"
 #include "testing.h"
 
-Err print_res_array(const Row *res_array){
+#define PROMPT "Результат: "
+
+Err print_row(const Row *res_array){
     if(res_array == NULL){
         return ERR_NULL;
     }
-    printf("Результат: ");
+    printf(PROMPT);
     for(size_t i = 0; i < res_array->len; i++){
         printf("%f ", res_array->numbers[i]);
     }
@@ -38,12 +40,17 @@ void free_row(Row *res_array){
     }
 }
 
-Err input_row(Row *row){
+Row *input_row(const size_t len){
+	Row *row = create_row(len);
+	if(row == NULL){
+		return NULL;
+	}
 	for(size_t j = 0; j < row->len; j++){
 		printf("%zu = ", j + 1);
 		if(check_error_for_float(&(row->numbers[j]), -FLT_MAX, FLT_MAX) == END_PROGRAM){
-			return END_PROGRAM;
+			free_row(row);
+			return NULL;
 		}
 	}
-	return ERR_OK;
+	return row;
 }
