@@ -3,10 +3,15 @@ CC=gcc
 OBJ=obj
 TARGET=a
 
-clean :
-	rm -rv a
+SOURCES=$(wildcard *.c)
+OBJECTS=$(patsubst %.c,$(OBJ)/%.o,$(SOURCES))
 
-$(TARGET) : $(OBJ)/main.o $(OBJ)/testing.o $(OBJ)/row.o $(OBJ)/matrix.o $(OBJ)/individual.o
+clean :
+	rm -fr $(OBJ)
+	rm -frv $(TARGET)
+
+$(TARGET) : $(OBJECTS)
+	mkdir -p $(dir $@)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 $(OBJ)/%.o : %.c

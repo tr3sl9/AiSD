@@ -19,7 +19,7 @@ int main(){
 		return 1;
 	}
 	print_matrix(matrix);
-	print_res_array(res_array);
+	print_row(res_array);
     free_matrix(matrix);
 	free_row(res_array);
     return 0;
