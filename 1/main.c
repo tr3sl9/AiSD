@@ -7,8 +7,8 @@
 #include "individual.h"
 
 int main(){
-	char *prompt_r = "Результат:";
-	char *prompt_m = "Матрица:";
+	static const char *prompt_r = "Результат:";
+	static const char *prompt_m = "Матрица:";
     Matrix *matrix = input_matrix();
     if(matrix == NULL){
         printf("Ошибка при создании матрицы\n");
