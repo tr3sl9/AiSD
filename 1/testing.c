@@ -13,7 +13,7 @@ Err check_error_for_st(size_t *count, size_t min, size_t max){
 		else if(p2 == EOF){
 			return END_PROGRAM;
 		} else {
-			if(*count <= min || *count >= max){
+			if(*count < min || *count >= max){
 				p2 = 0;
 				printf("Харам, введенное число должно быть больше %zu и меньше %zu\n", min, max);
 				printf("Введите число еще раз: ");
