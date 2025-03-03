@@ -7,7 +7,7 @@ typedef struct Row {
 	float *numbers;
 } Row;
 
-Err print_row(const Row *);
+Err print_row(const Row *, const char *);
 Row *create_row(const size_t);
 void free_row(Row *);
 Row *input_row(const size_t);

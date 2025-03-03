@@ -7,18 +7,13 @@
 #include "matrix.h"
 #include "row.h"
 
-#define PROMPTM "Матрица: \n"
-
-Err print_matrix(const Matrix *matrix){
+Err print_matrix(const Matrix *matrix, const char *msg){
     if(matrix == NULL){
 		return ERR_NULL;
 	}
-	printf(PROMPTM);
-    for(size_t i = 0; i < matrix->rows_count; i++) {
-        for(size_t j = 0; j < matrix->row[i].len; j++){
-            printf("%f ", matrix->row[i].numbers[j]);
-        }
-        printf("\n");
+	printf("%s\n", msg);
+    for(size_t i = 0; i < matrix->rows_count; i++){
+		print_row(matrix->row + i, NULL);	
     }
     return ERR_OK;
 }
@@ -65,10 +60,6 @@ Matrix *input_matrix(){
 			return NULL;
 		}
 		Row *row = input_row(len);
-		if(row == NULL){
-			free_matrix(matrix);
-			return NULL;
-		}
 		memcpy(matrix->row + i, row, sizeof(Row));
 		free(row);
 	}

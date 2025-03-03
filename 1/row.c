@@ -7,13 +7,11 @@
 #include "individual.h"
 #include "testing.h"
 
-#define PROMPT "Результат: "
-
-Err print_row(const Row *res_array){
+Err print_row(const Row *res_array, const char *msg){
     if(res_array == NULL){
         return ERR_NULL;
     }
-    printf(PROMPT);
+    if (msg) printf("%s\n", msg);
     for(size_t i = 0; i < res_array->len; i++){
         printf("%f ", res_array->numbers[i]);
     }
