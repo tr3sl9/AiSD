@@ -5,22 +5,23 @@
 typedef struct Stack {
 	char **container;
 	size_t top;
-	size_t capacity
+	size_t capacity;
 } Stack;
 
-void *stack_pop(Stack *stack) {
+char *stack_pop(Stack *stack) {
 	if (stack_is_empty(stack)) return NULL;
 	return stack->container[stack->top--];
 }
 
-bool stack_is_empty(const Stack *stack) {
-	return stach->top == -1;
+int stack_is_empty(const Stack *stack) {
+	return stack->top == NOK;
 }
 
-bool stack_is_full(const Stack *stack) {
+int stack_is_full(const Stack *stack) {
 	return stack->top == stack->capacity - 1;
+}
 
-bool stack_push(Stack *stack, char *el) {
+int stack_push(Stack *stack, char *el) {
 	if (stack_is_full(stack)) {
 		for (int i = 0; i < stack->top; i++) {
 			stack->container[i] = stack->container[i + 1];
@@ -28,10 +29,10 @@ bool stack_push(Stack *stack, char *el) {
 		stack->top--;
 	}
 	stack->container[++stack->top] = el;
-	return true;
+	return 1;
 }
 
-Stack *stack_create(int capacity) {
+Stack *stack_create(size_t capacity) {
 	Stack *stack = (Stack*)calloc(1, sizeof(Stack));
 	if (stack == NULL) return NULL;
 	stack->container = (char**)malloc(capacity * sizeof(char*));
@@ -39,8 +40,15 @@ Stack *stack_create(int capacity) {
 		free(stack);
 		return NULL;
 	}
-	stack->top = -1;
+	stack->top = NOK;
 	stack->capacity = capacity;
 	return stack;
 }
 
+void stack_free(Stack *stack){
+	if (stack) {
+		free(stack->container);
+		free(stack);
+	}
+	return;
+}
