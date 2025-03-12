@@ -20,22 +20,22 @@ Stack *stack_create(size_t capacity) {
 	return stack;
 }
 
-int stack_push(Stack *stack, char *el) {
+state stack_push(Stack *stack, char *el) {
 	Node *new_node = (Node*)malloc(sizeof(Node));
-	if (new_node == NULL) return 0;
+	if (new_node == NULL) return NOK;
 	new_node->container = el;
 	new_node->next = stack->top;
 	stack->top = new_node;
 	stack->len++;
-	return 1;
+	return OK;
 }
 
-int stack_is_full(const Stack *stack) {
-	return 0;
+state stack_is_full(const Stack *stack) {
+	return NOK;
 }
 
-int stack_is_empty(const Stack *stack) {
-	return stack->top == NULL;
+state stack_is_empty(const Stack *stack) {
+	if (stack->top == NULL) return OK;
 }
 
 char *stack_pop(Stack *stack) {
@@ -57,4 +57,9 @@ void stack_free(Stack *stack){
 	}
 	free(stack);
 	return;
+}
+
+char *stack_peek(const Stack *stack){
+	if (stack_is_empty) return NULL;
+	return stack->top->container;
 }

@@ -4,32 +4,37 @@
 
 typedef struct Stack {
 	char **container;
-	size_t top;
+	size_t head;
+	size_t tail;
 	size_t capacity;
+	size_t current_len;
 } Stack;
 
 char *stack_pop(Stack *stack) {
 	if (stack_is_empty(stack)) return NULL;
-	return stack->container[stack->top--];
+	char *el = stack->container[stack->head];
+	stack->head = (stack->head + 1) % stack->capacity;
+	stack->current_len--;
+	return el;
 }
 
-int stack_is_empty(const Stack *stack) {
-	return stack->top == NOK;
+state stack_is_empty(const Stack *stack) {
+	return stack->head == NOK;
 }
 
-int stack_is_full(const Stack *stack) {
-	return stack->top == stack->capacity - 1;
+state stack_is_full(const Stack *stack) {
+	return stack->current_len == stack->capacity - 1;
 }
 
-int stack_push(Stack *stack, char *el) {
+state stack_push(Stack *stack, char *el) {
 	if (stack_is_full(stack)) {
-		for (int i = 0; i < stack->top; i++) {
-			stack->container[i] = stack->container[i + 1];
-		}
-		stack->top--;
+		stack->head = (stack->head + 1) % stack->capacity;
+		stack->current_len--;
 	}
-	stack->container[++stack->top] = el;
-	return 1;
+	stack->container[stack->tail] = el;
+	stack->tail = (stack->tail + 1) % stack->capacity;
+	stack->current_len++;
+	return OK;
 }
 
 Stack *stack_create(size_t capacity) {
@@ -40,7 +45,9 @@ Stack *stack_create(size_t capacity) {
 		free(stack);
 		return NULL;
 	}
-	stack->top = NOK;
+	stack->head = 0;
+	stack->tail = 0;
+	stack->current_len = 0;
 	stack->capacity = capacity;
 	return stack;
 }
@@ -49,6 +56,11 @@ void stack_free(Stack *stack){
 	if (stack) {
 		free(stack->container);
 		free(stack);
-	}
+	}	
 	return;
+}
+
+char *stack_peek(const Stack *stack){
+	if(stack_is_empty(stack)) return NULL;
+	return stack->container[stack->head];
 }
