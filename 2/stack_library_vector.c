@@ -26,7 +26,7 @@ state stack_is_full(const Stack *stack) {
 	return stack->current_len == stack->capacity - 1;
 }
 
-state stack_push(Stack *stack, char *el) {
+state stack_push(Stack *stack, void *el) {
 	if (stack_is_full(stack)) {
 		stack->head = (stack->head + 1) % stack->capacity;
 		stack->current_len--;

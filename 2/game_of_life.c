@@ -1,15 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "stack_library_vector.h"
-#include "stack_library_list.h"
-#include "stack_library.h"
-
-typedef struct Generation {
-	char **grid;
-	size_t width;
-	size_t height;
-} Generation;
+#include "game_of_life.h"
 
 char **create_field(size_t width, size_t height) {
 	char **field = (char**)malloc(height * sizeof(char*));
@@ -21,7 +13,7 @@ char **create_field(size_t width, size_t height) {
 				free(field[j]);
 			}
 			free(field);
-			return NULL:
+			return NULL;
 		}
 	}
 	return field;
@@ -40,7 +32,7 @@ Generation *create_gen(size_t width, size_t height) {
 	if (gen == NULL) return NULL;
 	gen->field = create_field(width, height);
 	if (gen->field == NULL) return NULL;
-	gen->widht = width;
+	gen->width = width;
 	gen->height = height;
 	return gen;
 }
@@ -50,6 +42,20 @@ void free_gen(Generation *gen){
 		free_field(gen->field, gen->height);
 		free(gen);
 	}
+}
+
+void print_gen(Generation *current) {
+	if (current == NULL) {
+		printf("Генерация пуста\n");
+		return;
+	}
+	for(int i = 0; i < current->height; i++) {
+		for(int j = 0; j < current->width; j++) {
+			printf("%c", current->field[i][j]);
+		}
+		printf("/n");	
+	}
+	return;
 }
 
 int count_neighbour(Generation *current, size_t i, size_t j) {
@@ -63,7 +69,7 @@ int count_neighbour(Generation *current, size_t i, size_t j) {
 	return count_of_live;
 }
 
-cell_state change_state(char *cell, size_t count_of_live) {
+cell_state change_state(char cell, size_t count_of_live) {
 	if (cell == live) {
 		if (count_of_live == 2 || count_of_live == 3) {
 			return live;
@@ -80,11 +86,12 @@ cell_state change_state(char *cell, size_t count_of_live) {
 }
 
 Generation *next_gen(Generation *current) {
-	Generation *next = create_gen(current->width; current->height);
-	for(size_t i = 0; i < height; i++) {
-		for(size_t j = 0; j < width; j++) {
-			int count_of_live = count_neighbout(current, i, j);
-			next->field[i][j] = change_state(&current->field[i][j], count_of_live);
+	Generation *next = create_gen(current->width, current->height);
+	if (next == NULL) return NULL;
+	for(size_t i = 0; i < current->height; i++) {
+		for(size_t j = 0; j < current->width; j++) {
+			int count_of_live = count_neighbour(current, i, j);
+			next->field[i][j] = change_state(current->field[i][j], count_of_live);
 		} 
 	}
 	return next;
@@ -116,7 +123,7 @@ Generation *load_initial_state(const char *filename) {
 		fprintf(stderr, "Ошибка генерации игрового поля\n");
 		return NULL;
 	}
-	char line[width + 2];
+	char *line = (char*)malloc(width * sizeof(char));
 	int row = 0;
 	while (fgets(line, sizeof(line), file)) {
 		if (row >= height) break;
@@ -129,3 +136,4 @@ Generation *load_initial_state(const char *filename) {
 	return gen;
 }
 
+//TODO Выгрузка в файл для сохранения при выходе

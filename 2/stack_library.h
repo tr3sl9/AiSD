@@ -9,7 +9,7 @@ typedef enum state {
 } state;
 
 Stack *stack_create(size_t);
-state stack_push(Stack*, char*);
+state stack_push(Stack*, void*);
 state stack_is_full(const Stack*);
 state stack_is_empty(const Stack*);
 char *stack_pop(Stack*);

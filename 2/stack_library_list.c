@@ -20,7 +20,7 @@ Stack *stack_create(size_t capacity) {
 	return stack;
 }
 
-state stack_push(Stack *stack, char *el) {
+state stack_push(Stack *stack, void *el) {
 	Node *new_node = (Node*)malloc(sizeof(Node));
 	if (new_node == NULL) return NOK;
 	new_node->container = el;
