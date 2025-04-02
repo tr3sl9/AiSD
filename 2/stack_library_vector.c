@@ -1,66 +1,71 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "stack_library.h"
+#include "game_of_life.h"
 
 typedef struct Stack {
-	char **container;
-	size_t head;
-	size_t tail;
+	Generation **container;
+	size_t top;
 	size_t capacity;
 	size_t current_len;
 } Stack;
 
-char *stack_pop(Stack *stack) {
+Generation *stack_pop(Stack *stack) {
 	if (stack_is_empty(stack)) return NULL;
-	char *el = stack->container[stack->head];
-	stack->head = (stack->head + 1) % stack->capacity;
 	stack->current_len--;
-	return el;
+	stack->top = (stack->top - 1 + stack->capacity) % stack->capacity;
+	return stack->container[stack->top];
 }
 
 state stack_is_empty(const Stack *stack) {
-	return stack->head == NOK;
+	if (stack == NULL) return NOK;
+	return stack->current_len == 0;
 }
 
 state stack_is_full(const Stack *stack) {
+	if (stack == NULL) return NOK;
 	return stack->current_len == stack->capacity - 1;
 }
 
-state stack_push(Stack *stack, void *el) {
+state stack_push(Stack *stack, Generation *el) {
 	if (stack_is_full(stack)) {
-		stack->head = (stack->head + 1) % stack->capacity;
-		stack->current_len--;
+		//              char *old = stack->container[stack->top];
+		//              if (old) free(old);
+	} else {
+		stack->current_len++;
 	}
-	stack->container[stack->tail] = el;
-	stack->tail = (stack->tail + 1) % stack->capacity;
-	stack->current_len++;
+	stack->container[stack->top] = el;
+	stack->top = (stack->top + 1) % stack->capacity;
 	return OK;
 }
 
 Stack *stack_create(size_t capacity) {
-	Stack *stack = (Stack*)calloc(1, sizeof(Stack));
+	Stack *stack = (Stack*)malloc(sizeof(Stack));
 	if (stack == NULL) return NULL;
-	stack->container = (char**)malloc(capacity * sizeof(char*));
+	stack->container = (Generation**)calloc(capacity, sizeof(Generation*));
 	if (stack->container == NULL) {
 		free(stack);
 		return NULL;
 	}
-	stack->head = 0;
-	stack->tail = 0;
+	stack->top = 0;
 	stack->current_len = 0;
 	stack->capacity = capacity;
 	return stack;
 }
 
 void stack_free(Stack *stack){
-	if (stack) {
+	if (stack != NULL) {
+		while (!stack_is_empty(stack)) {
+			Generation *current = stack_pop(stack);
+			free_gen(current);
+		}
 		free(stack->container);
 		free(stack);
-	}	
+	}
 	return;
 }
 
-char *stack_peek(const Stack *stack){
+Generation *stack_peek(const Stack *stack){
 	if(stack_is_empty(stack)) return NULL;
-	return stack->container[stack->head];
+	return stack->container[(stack->top - 1 + stack->capacity) % stack->capacity];
 }

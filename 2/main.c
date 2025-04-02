@@ -5,72 +5,101 @@
 #include "stack_library.h"
 
 char controls() {
-	char input;
-	printf("Нажмите: \n'n' для перехода к следующей генерации \n'p' для перехода к предыдущей генерации \n'q' для выхода \n'v' для просмотра текущей генерации\n");
-	scanf("%c", &input);
-	return input;
-}
-
-void go_next(Generation *current, Generation *next, Stack *history) {
-	next = next_gen(current);
-	stack_push(history, next);
-	current = next;
-	next = create_gen(current->width, current->height);
-	return;
-}
-
-void go_previous(Generation *current, Generation *next, Stack *history) {
-	if (stack_is_empty(history)) {
-		printf("Предыдущая генерация недоступна\n");
-	} else {
-		free_gen(next);
-		next = current;
-		current = (Generation*)stack_pop(history);
+    char input;
+    char new_line = ' ';
+    printf("Нажмите: \n'n' для перехода к следующей генерации \n'p' для перехода к предыдущей генерации \n'q' для выхода \n'v' для просмотра текущей генерации\n");
+    if (scanf("%c", &input) == EOF) {
+		return 'e';
 	}
-	return;
+    while (new_line != '\n') {
+        scanf("%c", &new_line);
+    }
+    return input;
 }
 
-void print_current(Stack *history) {
-	Generation *peek = (Generation*)stack_peek(history);
-	if (peek == NULL) {
-		printf("Генераций еще не было\n");
-	} else {
-		printf("Текущая генерация\n");
-		print_gen(peek);
-	}
-	return;
+Generation *go_next(Generation *current, Stack *history) {
+    stack_push(history, current);
+    Generation *next = next_gen(current);
+    return next;
 }
 
+Generation *go_previous(Stack *history) {
+    if (stack_is_empty(history)) {
+        printf("Предыдущая генерация недоступна\n");
+        return NULL;
+    } else {
+        return stack_pop(history);
+    }
+}
+
+void print_current(Generation *current) {
+    if (current == NULL) {
+        printf("Генераций еще не было\n");
+    } else {
+        printf("Текущая генерация:\n");
+        print_gen(current);
+    }
+    return;
+}
+
+void break_game(Generation *current, const char *filename) {
+    if(save_state_to_file(filename, current)) {
+        printf("Генерация успешно сохранена\n");
+    } else {
+        fprintf(stderr, "Ошибка сохранения генерации в файл\n");
+    }
+    return;
+}
+
+void handle_invalid_input()	{
+	printf("Такой команды нет. Выбиерите команду из списка\n");
+	return;
+}
 int main(int argc, char **argv) {
 	if (argc != 2) {
 		fprintf(stderr, "Ошибка в названии файла\n");
-		return OK;
+		return NOK;
 	}
 	Stack *history = stack_create(10);
+	if (history == NULL) {
+		return NOK;
+	}
 	Generation *current = load_initial_state(argv[1]);
 	if (current == NULL) {
 		stack_free(history);
-		return OK;
+		return NOK;
 	}
-	Generation *next = next_gen(current);
-	if (next == NULL) {
-		free_gen(current);
-		stack_free(history);
-	}
-	stack_push(history, current);
 	char input;
+	print_gen(current);
 	while (1) {
-		print_gen(current);
 		input = controls();
-		if (input == 'n') go_next(current, next, history);
-		else if (input == 'p') go_previous(current, next, history);
-		else if (input == 'v') print_current(history);
-		else if (input == 'q') break;
-	}
-	while (!stack_is_empty(history)) {
-		free_gen((Generation*)stack_pop(history));
+		if (input == 'e') {
+			break;
+		} 
+		else if (input == 'n') {
+			current = go_next(current, history);
+			print_gen(current);
+		}
+		else if (input == 'p') {
+			free_gen(current);
+			current = go_previous(history);
+			if (current == NULL) {
+				break;
+			} else {
+				print_gen(current);
+			}
+		}
+		else if (input == 'v') {
+			print_current(current);
+		}
+		else if (input == 'q') {
+			break_game(current, argv[1]);
+			break;
+		} else {
+			handle_invalid_input();	
+		}
 	}
 	stack_free(history);
-	free_gen(next);
-	return 0;
+	free_gen(current);
+	return OK;
 }
