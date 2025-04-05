@@ -18,17 +18,24 @@ char controls() {
 }
 
 Generation *go_next(Generation *current, Stack *history) {
-    stack_push(history, current);
+    if (stack_push(history, current) != OK) {
+		return NULL;
+	}
     Generation *next = next_gen(current);
+	if (next == NULL) {
+		return NULL;
+	}
     return next;
 }
 
 Generation *go_previous(Stack *history) {
-    if (stack_is_empty(history)) {
+    if (stack_is_empty(history) == EMPTY) {
         printf("Предыдущая генерация недоступна\n");
         return NULL;
     } else {
-        return stack_pop(history);
+                Generation *current;
+        stack_pop(history, &current);
+                return current;
     }
 }
 
@@ -55,19 +62,20 @@ void handle_invalid_input()	{
 	printf("Такой команды нет. Выбиерите команду из списка\n");
 	return;
 }
+
 int main(int argc, char **argv) {
 	if (argc != 2) {
 		fprintf(stderr, "Ошибка в названии файла\n");
-		return NOK;
+		return 0;
 	}
 	Stack *history = stack_create(10);
 	if (history == NULL) {
-		return NOK;
+		return EMPTY;
 	}
 	Generation *current = load_initial_state(argv[1]);
 	if (current == NULL) {
 		stack_free(history);
-		return NOK;
+		return EMPTY;
 	}
 	char input;
 	print_gen(current);
@@ -83,9 +91,7 @@ int main(int argc, char **argv) {
 		else if (input == 'p') {
 			free_gen(current);
 			current = go_previous(history);
-			if (current == NULL) {
-				break;
-			} else {
+			if (current != NULL) {
 				print_gen(current);
 			}
 		}

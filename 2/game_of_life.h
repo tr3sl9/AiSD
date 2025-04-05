@@ -18,7 +18,7 @@ void free_field(char**, size_t);
 Generation *create_gen(size_t, size_t);
 void free_gen(Generation*);
 void print_gen(Generation*);
-int count_neighbout(const Generation*, size_t, size_t);
+int count_neighbour(const Generation*, ssize_t, ssize_t);
 cell_state change_state(char, size_t);
 Generation *next_gen(const Generation*);
 Generation *load_initial_state(const char*);
