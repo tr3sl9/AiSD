@@ -1,13 +1,15 @@
 #include <stdio.h>
+#include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 #include "game_of_life.h"
 #include "stack_library.h"
 
 char controls() {
     char input;
     char new_line = ' ';
-    printf("Нажмите: \n'n' для перехода к следующей генерации \n'p' для перехода к предыдущей генерации \n'q' для выхода \n'v' для просмотра текущей генерации\n");
+    printf("Нажмите: \n'n' для перехода к следующей генерации \n'p' для перехода к предыдущей генерации \n'q' для выхода \n'v' для просмотра текущей генерации\n'a' для автоматической игры\n");
     if (scanf("%c", &input) == EOF) {
 		return 'e';
 	}
@@ -33,9 +35,9 @@ Generation *go_previous(Stack *history) {
         printf("Предыдущая генерация недоступна\n");
         return NULL;
     } else {
-                Generation *current;
+        Generation *current;
         stack_pop(history, &current);
-                return current;
+        return current;
     }
 }
 
@@ -63,12 +65,31 @@ void handle_invalid_input()	{
 	return;
 }
 
+int break_signal = 0;
+
+void handle_sigint(int sig __attribute__((__unused__))) {
+	break_signal = 1;
+	return;
+}
+
+void auto_play(Generation **current, Stack *history) {
+	signal(SIGINT, handle_sigint);
+	while (!break_signal) {
+		*current = go_next(*current, history);
+		print_gen(*current);
+		sleep(1);
+	}
+	break_signal = 0;
+	signal(SIGINT, SIG_DFL);
+	return;
+}
+
 int main(int argc, char **argv) {
-	if (argc != 2) {
+	if (argc != 3) {
 		fprintf(stderr, "Ошибка в названии файла\n");
 		return 0;
 	}
-	Stack *history = stack_create(10);
+	Stack *history = stack_create(atoi(argv[2]));
 	if (history == NULL) {
 		return EMPTY;
 	}
@@ -101,6 +122,9 @@ int main(int argc, char **argv) {
 		else if (input == 'q') {
 			break_game(current, argv[1]);
 			break;
+		}
+		else if (input == 'a') {
+			auto_play(&current, history);
 		} else {
 			handle_invalid_input();	
 		}
