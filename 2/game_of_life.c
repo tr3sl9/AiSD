@@ -99,12 +99,18 @@ Generation *load_initial_state(const char * const filename) {
 }
 
 int count_neighbour(const Generation * const current, const ssize_t i, const ssize_t j) {
+	size_t h = current->height;
+	size_t w = current->width;
 	if (current == NULL || current->field == NULL) return 0;
 	size_t count_of_live = 0;
 	for(ssize_t k = i - 1; k < i + 2; k++) {
 		for(ssize_t l = j - 1; l < j + 2; l++) {
-			if (k == i && l == j) continue;
-			if (current->field[(k + current->height) % (current->height)][(l + current->width) % (current->width)] == STATE_LIVE) count_of_live++;
+			if (k == i && l == j) {
+				continue;
+			}
+			if (current->field[(k + h) % h][(l + w) % w] == STATE_LIVE) {
+				count_of_live++;
+			}
 		}
 	}
 	return count_of_live;
@@ -112,17 +118,9 @@ int count_neighbour(const Generation * const current, const ssize_t i, const ssi
 
 cell_state change_state(const char cell, const size_t count_of_live) {
 	if (cell == STATE_LIVE) {
-		if (count_of_live == 2 || count_of_live == 3) {
-			return STATE_LIVE;
-		} else {
-			return STATE_DEAD;
-		}
+		return (count_of_live == 2 || count_of_live == 3) ? STATE_LIVE : STATE_DEAD;
 	} else {
-		if (count_of_live == 3) {
-			return STATE_LIVE;
-		} else {
-			return STATE_DEAD;
-		}
+		return (count_of_live == 3) ? STATE_LIVE : STATE_DEAD;
 	}
 }
 
