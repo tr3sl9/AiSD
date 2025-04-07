@@ -19,14 +19,10 @@ Stack *stack_create() {
 }
 
 Node *create_node() {
-	Node *new_node = (Node*)calloc(1, sizeof(Node));
-	return new_node;
+	return (Node*)calloc(1, sizeof(Node));
 }
 
-state stack_push(Stack *stack, Generation *el) {
-	if (stack == NULL || el == NULL) {
-		return EMPTY;
-	}
+state stack_push(Stack * const stack, Generation * const el) {
 	Node *new_node = create_node();
 	if (new_node == NULL) {
 		return EMPTY;
@@ -37,12 +33,12 @@ state stack_push(Stack *stack, Generation *el) {
 	return OK;
 }
 
-state stack_is_empty(const Stack *stack) {
+state stack_is_empty(const Stack * const stack) {
 	if (stack->head == NULL) return EMPTY;
 	return OK;
 }
 
-state stack_pop(Stack *stack, Generation **current) {
+state stack_pop(Stack * const stack, Generation ** const current) {
 	if (stack_is_empty(stack) == EMPTY) return EMPTY;
 	Node *head_node = stack->head;
 	Generation *container = head_node->container;
@@ -52,7 +48,7 @@ state stack_pop(Stack *stack, Generation **current) {
 	return OK;
 }
 
-void stack_free(Stack *stack){
+void stack_free(Stack * const stack){
 	if (stack == NULL) {
 		return;
 	}
@@ -67,7 +63,7 @@ void stack_free(Stack *stack){
 	return;
 }
 
-Generation *stack_peek(const Stack *stack) {
+Generation *stack_peek(const Stack * const stack) {
 	if (stack_is_empty(stack) == EMPTY) return NULL;
 	Generation *copy = copy_gen(stack->head->container);
 	return copy;
