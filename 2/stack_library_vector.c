@@ -10,7 +10,7 @@ typedef struct Stack {
 	size_t current_len;
 } Stack;
 
-state stack_pop(Stack *stack, Generation **current) {
+state stack_pop(Stack * const stack, Generation ** const current) {
 	if (stack_is_empty(stack) == EMPTY) return EMPTY;
 	stack->current_len--;
 	stack->top = (stack->top - 1 + stack->capacity) % stack->capacity;
@@ -18,18 +18,18 @@ state stack_pop(Stack *stack, Generation **current) {
 	return OK;
 }
 
-state stack_is_empty(const Stack *stack) {
+state stack_is_empty(const Stack * const stack) {
 	if ((ssize_t)stack->current_len == -1) return EMPTY;
 	return OK;
 }
 
-state stack_is_full(const Stack *stack) {
+state stack_is_full(const Stack * const stack) {
 	if (stack == NULL) return EMPTY;
 	if (stack->current_len == stack->capacity - 1) return FULL;
 	return OK;
 }
 
-state stack_push(Stack *stack, Generation *el) {
+state stack_push(Stack * const stack, Generation * const el) {
 	if (stack_is_full(stack) == FULL) {
 		free_gen(stack->container[stack->top]);
 	} else {
@@ -54,7 +54,7 @@ Stack *stack_create(const size_t capacity) {
 	return stack;
 }
 
-void stack_free(Stack *stack){
+void stack_free(Stack * const stack){
 	if (stack != NULL) {
 		while (stack_is_empty(stack) != EMPTY) {
 			Generation *current;
@@ -67,7 +67,7 @@ void stack_free(Stack *stack){
 	return;
 }
 
-Generation *stack_peek(const Stack *stack){
+Generation *stack_peek(const Stack * const stack){
 	if(stack_is_empty(stack) == EMPTY) return NULL;
 	Generation *copy = copy_gen(stack->container[(stack->top - 1 + stack->capacity) % stack->capacity]);
 	return copy;
