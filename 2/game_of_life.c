@@ -5,7 +5,7 @@
 
 #define MAGIC_WORD "GAME_OF_LIFE\n"
 
-Generation *create_gen(size_t width, size_t height) {
+Generation *create_gen(const size_t width, const size_t height) {
         Generation *gen = (Generation*)malloc(sizeof(Generation));
         if (gen == NULL) return NULL;
         gen->field = create_field(width, height);
@@ -18,7 +18,7 @@ Generation *create_gen(size_t width, size_t height) {
         return gen;
 }
 
-char **create_field(size_t width, size_t height) {
+char **create_field(const size_t width, const size_t height) {
         char **field = (char**)malloc(height * sizeof(char*));
         if (field == NULL) return NULL;
         for(size_t i = 0; i < height; i++) {
@@ -98,7 +98,7 @@ Generation *load_initial_state(const char *filename) {
         return gen;
 }
 
-int count_neighbour(const Generation *current, ssize_t i, ssize_t j) {
+int count_neighbour(const Generation *current, const ssize_t i, const ssize_t j) {
         if (current == NULL || current->field == NULL) return 0;
         size_t count_of_live = 0;
         for(ssize_t k = i - 1; k < i + 2; k++) {
@@ -110,7 +110,7 @@ int count_neighbour(const Generation *current, ssize_t i, ssize_t j) {
         return count_of_live;
 }
 
-cell_state change_state(char cell, size_t count_of_live) {
+cell_state change_state(const char cell, const size_t count_of_live) {
         if (cell == live) {
                 if (count_of_live == 2 || count_of_live == 3) {
                         return live;
@@ -139,7 +139,7 @@ Generation *next_gen(const Generation *current) {
         return next;
 }
 
-void print_gen(Generation *current) {
+void print_gen(const Generation *current) {
         if (current == NULL) {
                 printf("Генерация пуста\n");
                 return;
@@ -197,7 +197,7 @@ int save_state_to_file(const char *filename, const Generation *gen) {
         return 1;
 }
 
-void free_field(char **field, size_t height) {
+void free_field(char **field, const size_t height) {
         for(size_t i = 0; i < height; i++) {
                 free(field[i]);
         }

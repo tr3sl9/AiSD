@@ -10,7 +10,7 @@ typedef enum state {
 	EMPTY = -1
 } state;
 
-Stack *stack_create(const size_t);
+Stack *stack_create();
 state stack_push(Stack*, Generation*);
 state stack_is_full(const Stack*);
 state stack_is_empty(const Stack*);

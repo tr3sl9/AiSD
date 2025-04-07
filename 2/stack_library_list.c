@@ -10,18 +10,16 @@ typedef struct Node {
 
 typedef struct Stack {
 	Node *head;
-	size_t current_len;
 } Stack;
 
-Stack *stack_create(const size_t capacity) {
+Stack *stack_create() {
 	Stack *stack = (Stack*)calloc(1, sizeof(Stack));
 	if (stack == NULL) return NULL;
-	stack->current_len = capacity;
 	return stack;
 }
 
 Node *create_node() {
-	Node *new_node = (Node*)malloc(sizeof(Node));
+	Node *new_node = (Node*)calloc(1, sizeof(Node));
 	return new_node;
 }
 
@@ -36,7 +34,6 @@ state stack_push(Stack *stack, Generation *el) {
 	new_node->container = el;
 	new_node->next = stack->head;
 	stack->head = new_node;
-	stack->current_len++;
 	return OK;
 }
 
@@ -51,7 +48,6 @@ state stack_pop(Stack *stack, Generation **current) {
 	Generation *container = head_node->container;
 	stack->head = head_node->next;
 	free(head_node);
-	stack->current_len--;
 	*current = container;
 	return OK;
 }
