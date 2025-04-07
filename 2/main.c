@@ -110,9 +110,11 @@ int main(int argc, char **argv) {
 			print_gen(current);
 		}
 		else if (input == 'p') {
-			free_gen(current);
-			current = go_previous(history);
-			if (current != NULL) {
+			Generation *gen;
+			gen = go_previous(history);
+			if (gen != NULL) {
+				free_gen(current);
+				current = gen;
 				print_gen(current);
 			}
 		}
