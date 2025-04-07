@@ -8,8 +8,8 @@ typedef struct Generation {
 } Generation;
 
 typedef enum cell_state {
-	live = '#',
-	die = '.'
+	STATE_LIVE = '#',
+	STATE_DEAD = '.'
 } cell_state;
 
 char **create_field(const size_t, const size_t);
