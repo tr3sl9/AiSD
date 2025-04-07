@@ -35,7 +35,7 @@ char **create_field(const size_t width, const size_t height) {
         return field;
 }
 
-Generation *copy_gen(const Generation *current) {
+Generation *copy_gen(const Generation * const current) {
         if (current == NULL || current->height == 0 || current->width == 0) return NULL;
         Generation *copy = create_gen(current->width, current->height);
         for (size_t i = 0; i < current->height; i++) {
@@ -44,7 +44,7 @@ Generation *copy_gen(const Generation *current) {
         return copy;
 }
 
-Generation *load_initial_state(const char *filename) {
+Generation *load_initial_state(const char * const filename) {
         if (filename == NULL) return NULL;
         FILE *file = fopen(filename, "r");
         if (file == NULL) {
@@ -98,7 +98,7 @@ Generation *load_initial_state(const char *filename) {
         return gen;
 }
 
-int count_neighbour(const Generation *current, const ssize_t i, const ssize_t j) {
+int count_neighbour(const Generation * const current, const ssize_t i, const ssize_t j) {
         if (current == NULL || current->field == NULL) return 0;
         size_t count_of_live = 0;
         for(ssize_t k = i - 1; k < i + 2; k++) {
@@ -126,7 +126,7 @@ cell_state change_state(const char cell, const size_t count_of_live) {
         }
 }
 
-Generation *next_gen(const Generation *current) {
+Generation *next_gen(const Generation * const current) {
         if (current == NULL || current->field == NULL) return NULL;
         Generation *next = create_gen(current->width, current->height);
         if (next == NULL) return NULL;
@@ -139,9 +139,9 @@ Generation *next_gen(const Generation *current) {
         return next;
 }
 
-void print_gen(const Generation *current) {
+void print_gen(const Generation * const current) {
         if (current == NULL) {
-                printf("Генерация пуста\n");
+                printf("Поколение пусто\n");
                 return;
         }
         for(size_t i = 0; i < current->height; i++) {
@@ -153,7 +153,7 @@ void print_gen(const Generation *current) {
         return;
 }
 
-int save_state_to_file(const char *filename, const Generation *gen) {
+int save_state_to_file(const char * const filename, const Generation * const gen) {
         if (filename == NULL || gen == NULL || gen->field == NULL) {
                 fprintf(stderr, "Ошибка: NULL параметры\n");
                 return 0;
@@ -161,7 +161,7 @@ int save_state_to_file(const char *filename, const Generation *gen) {
         if (gen->width <= 0 || gen->height <= 0) {
                 fprintf(stderr, "Ошибка: неверные размеры поля (%zu x %zu)\n", gen->width, gen->height);
         return 0;
-    }
+		}
         FILE *file = fopen(filename, "w");
         if (file == NULL) {
                 fprintf(stderr, "Ошибка открытия файла\n");
@@ -170,7 +170,7 @@ int save_state_to_file(const char *filename, const Generation *gen) {
         if (fprintf(file, "GAME_OF_LIFE\n%zu %zu\n", gen->width, gen->height) < 0) {
         fclose(file);
         return 0;
-    }
+		}
         for(size_t i = 0; i < gen->height; i++) {
                 for(size_t j = 0; j < gen->width; j++) {
                          if (gen->field[i][j] != live && gen->field[i][j] != die) {
@@ -197,7 +197,7 @@ int save_state_to_file(const char *filename, const Generation *gen) {
         return 1;
 }
 
-void free_field(char **field, const size_t height) {
+void free_field(char ** const field, const size_t height) {
         for(size_t i = 0; i < height; i++) {
                 free(field[i]);
         }
@@ -205,7 +205,7 @@ void free_field(char **field, const size_t height) {
         return;
 }
 
-void free_gen(Generation *gen){
+void free_gen(Generation * const gen){
         if (gen) {
                 free_field(gen->field, gen->height);
                 free(gen);
