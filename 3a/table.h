@@ -26,6 +26,7 @@ void insert_element(Table*);
 void delete_element(Table*);
 void print_table(const Table*);
 void import_table_from_file(Table*);
+void export_table_to_file(const Table*);
 void search_by_key(const Table*);
 void search_by_key_with_release(const Table*);
 void clean_table(Table*);

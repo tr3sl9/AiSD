@@ -3,9 +3,18 @@
 #include <stdlib.h>
 #include "table.h"
 
+#define MAGIC_WORD "TABLE\n"
+
 Table *init_table(const IndexType msize) {
 	Table *table = (Table*)malloc(sizeof(Table));
+	if (table == NULL) {
+		return NULL;
+	}
 	table->ks = (KeySpace*)malloc(msize * sizeof(KeySpace));
+	if (table == NULL) {
+		free(table);
+		return NULL;
+	}
 	table->msize = msize;
 	table->csize = 0;
 	return table;
@@ -22,18 +31,24 @@ void free_table(Table * const table) {
 }
 
 void insert_element(Table * const table) {
+//TODO mb enum???, but what mistakes???
+	size_t len = 100;
 	if (table->csize >= table->msize) {
 		printf("Error: Table is full\n");
 		return;
 	}
 	printf("Enter key: ");
-	char *key = (char*)malloc(100 * sizeof(char));
-	fgets(key, sizeof(key), stdin);
-	key[strcspn(info, "\n")] = '\0';
+	char *key = NULL;
+	if (getline(&key, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
 	printf("Enter info: ");
-	char *info = (char*)malloc(100 * sizeof(char));
-	fgets(info, sizeof(info, stdin));
-	info[strcspn(info, "\n")] = '\0';
+	char *info = NULL;
+	if (getline(&info, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
 	RelType release = 1;
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0) {
@@ -49,10 +64,13 @@ void insert_element(Table * const table) {
 }
 
 void delete_element(Table * const table) {
+	size_t len = 100;
     printf("Enter key to delete: ");
-    char *key = (char*)malloc(100 * sizeof(char));
-    fgets(key, sizeof(key), stdin);
-    key[strcspn(key, "\n")] = '\0';
+    char *key = NULL;
+	if (getline(&key, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
     size_t deleted = 0;
     for (IndexType i = 0; i < table->csize; ) {
         if (strcmp(table->ks[i].key, key) == 0) {
@@ -81,46 +99,90 @@ void print_table(const Table * const table) {
 }
 
 void import_table_from_file(Table * const table) {
+	size_t len = 100;
 	printf("Enter filename: ");
-	char *filename = (char*)malloc(100 * sizeof(char));
-	fgets(filename, sizeof(filename), stdin);
-	filename[strcspn(filename, "\n")] = '\0';
+	char *filename = NULL;
+	if (getline(&filename, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
 	FILE *file = fopen(filename, "r");
 	if (!file) {
 		printf("Error oppening file\n");
 		return;
 	}
-	char *line = (char*)malloc(256 * sizeof(char));
-	while (fgets(line, sizeof(line), file)) {
+	char magic_word[sizeof(MAGIC_WORD)] = {0};
+	fgets(magic_word, sizeof(magic_word), file);
+	if (strcmp(magic_word, MAGIC_WORD) != 0) {
+		fclose(file);
+		printf("Error: magic_word\n");
+		return;
+	}
+	size_t msize, csize;
+    if (fscanf(file, "%zu %zu\n", &msize, &csize) != 2) {
+        fclose(file);
+		printf("Error: size\n");
+        return;
+    }
+    if (msize != table->msize) {
+        fclose(file);
+		printf("Error: size\n");
+        return;
+    }
+	char *line = NULL;
+	while (getline(&line, &len, file) != -1) {
 		char *key = strtok(line, ":");
+		char *release = strtok(NULL, ":")
 		char *info = strtok(NULL, "\n");
-		if (key && info) {
+		if (key && info && release) {
 			if (table->csize >= table->msize) {
 				printf("Error: Table is full\n");
 				fclose(file);
 				return;
 			}
-			RelType release = 1;
-			for (IndexType i = 0; i < table->csize; i++) {
-				if (strcmp(table->ks[i].key, key) == 0) {
-						release++;
-				}
-			}
 			table->ks[table->csize].key = key;
-			table->ks[table->csize].release = i;
+			table->ks[table->csize].release = release;
 			table->ks[table->csize].info = info;
-			table->csize++;
 		}
 	}
 	fclose(file);
 	return;
 }
 
+void export_table_to_file(const Table * const table) {
+	size_t len = 100;
+	if (table == NULL) {
+		printf("Error: table is empty\n");
+		return;
+	}
+	printf("Enter filename: ");
+	char *filename = NULL;
+	if (getline(&filename, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
+	FILE *file = fopen(filename, "w");
+	if (!file) {
+		printf("Error oppening file\n");
+		return;
+	}
+	fprintf(file, "%s", MAGIC_WORD);
+	fprintf(file, "%zu %zu\n", table->msize, table->csize);
+	for (IndexType i = 0; i < table->csize; i++) {
+		fprintf(file, "%s:%s:$s\n", table->ks[i].key, table->ks[i].release, table->ks[i].info);
+	}
+	fclose(file);
+	return;
+}
+
 void search_by_key(const Table * const table) {
+	size_t len = 100;
 	printf("Enter key: ");
-	char *key = (char*)malloc(sizeof(char));
-	fgets(key, sizeof(key), stdin);
-	key[strcspn(key, "\n")] = '\0';
+	char *key = NULL;
+	if (getline(&key, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
 	Table *result = init_table(table->msize);
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == version) {
@@ -138,10 +200,13 @@ void search_by_key(const Table * const table) {
 }
 
 void search_by_key_with_version(const Table * const table) {
+	size_t len = 100;
 	printf("Enter key: ");
-	char *key = (char*)malloc(sizeof(char));
-	fgets(key, sizeof(key), stdin);
-	key[strcspn(key, "\n")] = '\0';
+	char *key = NULL;
+	if (getline(&key, &len, stdin) == -1) {
+		printf("Error\n");
+		return;
+	}
 	printf("Enter version: ");
 	RelType version;
 	scanf("%zu", &version);
