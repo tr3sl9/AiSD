@@ -11,7 +11,7 @@ Table *init_table(const IndexType msize) {
 		return NULL;
 	}
 	table->ks = (KeySpace*)malloc(msize * sizeof(KeySpace));
-	if (table == NULL) {
+	if (table->ks == NULL) {
 		free(table);
 		return NULL;
 	}
@@ -30,46 +30,62 @@ void free_table(Table * const table) {
 	return;
 }
 
-table_err insert_element(Table * const table, const KeyType const key, const InfoType const info) {
+RelType find_last_release(const Table * const table, const KeyType key) {
+	RelType release = 1;
+	for (IndexType i = 0; i < table->csize; i++) {
+		if (strcmp(*(table->ks[i].key), key) == 0) {
+			release++;
+		}
+	}
+	return release;
+}
+
+void set_key(KeySpace * const ks, const KeyType key, const InfoType info, const RelType release) {
+	if (!ks || !key || !info) return;
+	*(ks->key) = strdup(key);
+	ks->release = release;
+	*(ks->info) = strdup(info);
+	return;
+}
+
+table_err insert_element(Table * const table, const KeyType key, const InfoType info) {
 	if (!table) {
 		return TABLE_NULL;
 	}
 	if (!key || !info) {
 		return TABLE_VAL;
 	}
-	RelType release = 1;
-	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0) {
-			release++;
-		}
-	}
-	table->ks[table->csize].key = strdup(key);
-	table->ks[table->csize].release = release;
-	table->ks[table->csize].info = strdup(info);
+	RelType release = find_last_release(table, key);
+	set_key(table->ks + table->csize, key, info, release);
 	table->csize++;
 	return TABLE_OK;
 }
 
-table_err delete_element(Table * const table, const KeyType const key) {
+void free_ks(KeySpace * const ks) {
+	free(ks->key);
+	free(ks->info);
+	return;
+}
+
+table_err delete_element(Table * const table, const KeyType key) {
 	if (!table) {
 		return TABLE_NULL;
 	}
 	if (!key) {
 		return TABLE_VAL;
 	}
-    for (IndexType i = 0; i < table->csize; ) {
-        if (strcmp(table->ks[i].key, key) == 0) {
-            free(table->ks[i].key);
-            free(table->ks[i].info);
-            for (IndexType j = i; j < table->csize - 1; j++) {
-                table->ks[j] = table->ks[j+1];
-            }
+    for (IndexType i = 0; i < table->csize; i++) {
+        if (strcmp(*(table->ks[i].key), key) == 0) {
+            free_ks(table->ks + i);
             table->csize--;
-        } else {
-            i++;
         }
     }
 	return TABLE_OK;
+}
+
+void print_ks(const KeySpace * const ks, size_t i) {
+	printf("%zu\t%s\t%zu\t%s\n", i, *(ks->key), ks->release, *(ks->info));
+	return;
 }
 
 table_err print_table(const Table * const table) {
@@ -79,12 +95,12 @@ table_err print_table(const Table * const table) {
 	printf("Table contents (%zu/%zu):]n", table->csize, table->msize);
 	printf("Index\tKey\tRelease\tInfo\n");
 	for (IndexType i = 0; i < table->csize; i++) {
-		printf("%zu\t%s\t%zu\t%s\n%", i, table->ks[i].key, table->ks[i].release, table->ks[i].info);
+		print_ks(table->ks + i, i);
 	}
 	return TABLE_OK;
 }
 
-table_err import_table_from_file(Table * const table, const chat * const filename) {
+table_err import_table_from_file(Table * const table, const char * const filename) {
 	FILE *file = fopen(filename, "r");
 	if (!file) {
 		return FILE_ERR;
@@ -93,7 +109,7 @@ table_err import_table_from_file(Table * const table, const chat * const filenam
 	fgets(magic_word, sizeof(magic_word), file);
 	if (strcmp(magic_word, MAGIC_WORD) != 0) {
 		fclose(file);
-		return TABLE_MAGIC_WRORD;
+		return TABLE_MAGIC_WORD;
 	}
 	size_t msize, csize;
     if (fscanf(file, "%zu %zu\n", &msize, &csize) != 2) {
@@ -104,23 +120,22 @@ table_err import_table_from_file(Table * const table, const chat * const filenam
         fclose(file);
         return TABLE_SIZE;
     }
+	size_t len = 100;
 	char *line = NULL;
 	while (getline(&line, &len, file) != -1) {
-		char *key = strtok(line, ":");
-		char *release = strtok(NULL, ":")
-		char *info = strtok(NULL, "\n");
+		KeyType key = strtok(line, ":");
+		char *release = strtok(NULL, ":");
+		InfoType info = strtok(NULL, "\n");
 		if (key && info && release) {
 			if (table->csize >= table->msize) {
 				fclose(file);
 				return TABLE_FULL;
 			}
-			table->ks[table->csize].key = key;
-			table->ks[table->csize].release = release;
-			table->ks[table->csize].info = info;
+			set_key(table->ks + csize, key, info, (RelType)release);
 		}
 	}
 	fclose(file);
-	return TBALE_OK;
+	return TABLE_OK;
 }
 
 table_err export_table_to_file(const Table * const table, const char * const filename) {
@@ -131,7 +146,7 @@ table_err export_table_to_file(const Table * const table, const char * const fil
 	fprintf(file, "%s", MAGIC_WORD);
 	fprintf(file, "%zu %zu\n", table->msize, table->csize);
 	for (IndexType i = 0; i < table->csize; i++) {
-		fprintf(file, "%s:%s:$s\n", table->ks[i].key, table->ks[i].release, table->ks[i].info);
+		fprintf(file, "%s:%zu:%s\n", *(table->ks[i].key), table->ks[i].release, *(table->ks[i].info));
 	}
 	fclose(file);
 	return TABLE_OK;
@@ -144,15 +159,17 @@ table_err search_by_key(const Table * const table, const char * const key) {
 	if (!key) {
 		return TABLE_VAL;
 	}
-	Table *result = init_table(table->msize);
+	Table *result = init_table(1);
 	if (!result) {
 		return TABLE_NULL;
 	}
 	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == version) {
-			result->ks[result->csize].key = key;
-			result->ks[result->csize].info = info;
-			result->ks[result->csize].release = table->ks[i].release;
+		if (strcmp(*(table->ks[i].key), key) == 0) {
+			if (result->msize == result->csize) {
+				result->ks = (KeySpace*)realloc(result->ks, ((result->msize) + 1) * sizeof(KeySpace));
+				result->msize++;
+			}
+			set_key(table->ks + table->csize, key, info, release);
 			result->csize++;
 			break;
 		}
@@ -163,19 +180,24 @@ table_err search_by_key(const Table * const table, const char * const key) {
 	return TABLE_OK;
 }
 
-table_err search_by_key_with_version(const Table * const table, const char * const key, const version) {
+table_err search_by_key_with_version(const Table * const table, const char * const key, const RelType release) {
 	if (!table) {
 		return TABLE_NULL;
 	}
-	if (!key || !version) {
+	if (!key || !release) {
 		return TABLE_VAL;
 	}
-	Table *result = init_table(table->msize);
+	Table *result = init_table(1);
+	if (!result) {
+		return TABLE_NULL;
+	}
 	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == version) {
-			result->ks[result->csize].key = key;
-			result->ks[result->csize].info = info;
-			result->ks[result->csize].release = table->ks[i].release;
+		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
+			if (result->msize == result->csize) {
+				result->ks = (KeySpace*)realloc((result->msize) + 1, sizeof(KeySpace));
+				table->msize++;
+			}
+			set_key(table->ks + csize, key, info, release);
 			result->csize++;
 			break;
 		}
@@ -186,7 +208,11 @@ table_err search_by_key_with_version(const Table * const table, const char * con
 	return TABLE_OK;
 }
 
-table_err clean_table(Table * const table) {
+void table_realloc(Table * const table) {
+	table->ks = (KeySpace*)	
+}
+
+void clean_table(Table * const table) {
 	if (table == NULL) {
 		return TABLE_NULL;
 	}
@@ -210,6 +236,7 @@ table_err clean_table(Table * const table) {
 				free(table->ks[j].info);
 				for (IndexType k = j; k < table->csize - 1; k++) {
 					table->ks[k] = table->ks[k + 1];
+					table->msize++;
 				}
 				table->csize--;
 			} else {
@@ -221,7 +248,7 @@ table_err clean_table(Table * const table) {
 	return TABLE_OK;
 }
 
-void exit(Table * const table) {
+void exit_from_prog(Table * const table) {
 	free_table(table);
 	printf("Exit\n");
 	exit(0);

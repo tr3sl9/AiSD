@@ -1,20 +1,10 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include "table.h"
-#define COUNT_OP 8
+#define COUNT_OP sizeof menu_items / sizeof *menu_items
 
-const functions operation[COUNT_OP] = {
-	dialog_insert,
-	dialog_delete, 
-	dialog_find,
-	dialod_find_version,
-	dialog_print,
-	dialog_import,
-	dialog_clear,
-	dialog_export
-};
-
-const char *menu_items[COUNT_OP] = {
+const char *menu_items[] = {
 	"Insert element",
 	"Delete by key",
 	"Search by key",
@@ -22,7 +12,8 @@ const char *menu_items[COUNT_OP] = {
 	"Print table",
 	"Import from file",
 	"Export to file",
-	"Clean table"
+	"Clean table",
+	"Exit"
 };
 
 void dialog_insert(Table * const table) {
@@ -75,18 +66,17 @@ void dialog_delete(Table * const table) {
 		printf("Error: Value\n");
 	}
 	free(key);
-	free(info);
 	return;
 }
 
-void dialog_print(const Table * const table) {
+void dialog_print(Table * const table) {
 	if (print_table(table) != TABLE_OK) {
 		printf("Error: Table is null\n");
 	}
 	return;
 }
 
-void dialog_find(const Table * const table) {
+void dialog_find(Table * const table) {
 	size_t len = 100;
 	printf("Enter key: ");
 	char *key = NULL;
@@ -105,7 +95,7 @@ void dialog_find(const Table * const table) {
 	return;
 }
 
-void dialog_find_version(const Table * const table) {
+void dialog_find_release(Table * const table) {
 	size_t len = 100;
 	printf("Enter key: ");
 	char *key = NULL;
@@ -116,7 +106,7 @@ void dialog_find_version(const Table * const table) {
 	printf("Enter version: ");
 	RelType version;
 	scanf("%zu", &version);
-	table_err search_by_key_with_version(table, key, version);
+	table_err err = search_by_key_with_release(table, key, version);
 	if (err == TABLE_NULL) {
 		printf("Error: Table is null\n");
 	}
@@ -127,7 +117,7 @@ void dialog_find_version(const Table * const table) {
 	return;
 }
 
-void dialog_import(const Table * const table) {
+void dialog_import(Table * const table) {
 	size_t len = 100;
 	printf("Enter filename: ");
 	char *filename = NULL;
@@ -148,7 +138,7 @@ void dialog_import(const Table * const table) {
 		printf("Error: table size\n");
 		return;
 	}
-	else if (err = TABLE_FULL) {
+	else if (err == TABLE_FULL) {
 		printf("Error: table full\n");
 		return;
 	}
@@ -186,14 +176,29 @@ void dialog_export(Table * const table) {
 }
 
 void show_menu() {
-	for (int i = 0; i < COUNT_OP; i++) {
-		printf("%d. %s\n", i + 1, menu_items[i]);
+	for (size_t i = 0; i < COUNT_OP; i++) {
+		printf("%zu. %s\n", i + 1, menu_items[i]);
 	}
-	printf("%d. Exit\n", COUNT_OP + 1);
+}
+
+void dialog_exit(Table * const table) {
+	exit_from_prog(table);
 	return;
 }
 
-void process_choice(Table *table, int choice) {
+const functions operation[] = {
+	dialog_insert,
+	dialog_delete, 
+	dialog_find,
+	dialog_find_release,
+	dialog_print,
+	dialog_import,
+	dialog_clean,
+	dialog_export,
+	dialog_exit
+};
+
+void process_choice(Table *table, size_t choice) {
 	if (choice < 1 || choice > COUNT_OP) {
 		printf("Invalid choice\n");
 		return;
@@ -201,7 +206,7 @@ void process_choice(Table *table, int choice) {
 	if (choice == COUNT_OP + 1) {
 		dialog_exit(table);
 	} else {
-		operations[choice - 1](table);
+		operation[choice - 1](table);
 	}
 }
 

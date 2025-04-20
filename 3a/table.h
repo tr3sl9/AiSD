@@ -19,30 +19,30 @@ typedef char* InfoType;
 typedef size_t RelType;
 typedef size_t IndexType;
 
-typedef struct Table {
-	KeySpace *ks;
-	IndexType msize;
-	IndexType csize;
-} Table;
-
 typedef struct KeySpace {
 	KeyType *key;
 	RelType release;
 	InfoType *info;
 } KeySpace;
 
+typedef struct Table {
+	KeySpace *ks;
+	IndexType msize;
+	IndexType csize;
+} Table;
+
 typedef void (*functions)(struct Table*);
 
 Table *init_table(const IndexType);
 void free_table(Table*);
-table_err insert_element(Table*);
-table_err delete_element(Table*);
+table_err insert_element(Table*, const KeyType key, const InfoType info);
+table_err delete_element(Table*, const KeyType);
 table_err print_table(const Table*);
-table_err import_table_from_file(Table*);
-table_err export_table_to_file(const Table*);
-table_err search_by_key(const Table*);
-table_err search_by_key_with_release(const Table*);
+table_err import_table_from_file(Table*, const char*);
+table_err export_table_to_file(const Table*, const char*);
+table_err search_by_key(const Table*, const char*);
+table_err search_by_key_with_release(const Table*, const char*, const RelType);
 table_err clean_table(Table*);
-void exit(Table*);
+void exit_from_prog(Table*);
 
 #endif
