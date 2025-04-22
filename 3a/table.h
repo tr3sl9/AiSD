@@ -1,5 +1,7 @@
 #ifndef TABLE_H
 #define TABLE_H
+#include <stdio.h>
+#include "table.h"
 
 typedef enum table_err {
 	TABLE_OK = 0,
@@ -31,17 +33,18 @@ typedef struct Table {
 	IndexType csize;
 } Table;
 
-typedef void (*functions)(struct Table*);
-
-Table *init_table(const IndexType);
+void init_key_space(KeySpace *ks);
+int table_initialized(Table*);
+Table *create_table();
+Table *init_table(Table *, const IndexType);
 void free_table(Table*);
 table_err insert_element(Table*, const KeyType key, const InfoType info);
 table_err delete_element(Table*, const KeyType);
 table_err print_table(const Table*);
 table_err import_table_from_file(Table*, const char*);
 table_err export_table_to_file(const Table*, const char*);
-table_err search_by_key(const Table*, const char*);
-table_err search_by_key_with_release(const Table*, const char*, const RelType);
+Table* search_by_key(Table*, const KeyType);
+Table* search_by_key_with_release(Table*, const KeyType, const RelType);
 table_err clean_table(Table*);
 void exit_from_prog(Table*);
 

@@ -1,20 +1,19 @@
-CC = gcc
-CFLAGS = -Wall -Wextra -g
-LDFLAGS = 
-LDLIBS = 
+CFLAGS=-g -Wall -Wextra
+CC=gcc
+OBJ=obj
+TARGET=table
 
-.PHONY: all clean
+SOURCES=$(wildcard *.c)
+OBJECTS=$(patsubst %.c,$(OBJ)/%.o,$(SOURCES))
 
-all: table_manager
+clean :
+	rm -fr $(OBJ)
+	rm -frv $(TARGET)
 
-table_manager: main.o table.o
-	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+$(TARGET) : $(OBJECTS)
+	mkdir -p $(dir $@)
+	$(CC) -o $@ $^ $(CFLAGS)
 
-main.o: main.c table.h
-	$(CC) $(CFLAGS) -c $<
-
-table.o: table.c table.h
-	$(CC) $(CFLAGS) -c $<
-
-clean:
-	rm -f *.o table_manager
+$(OBJ)/%.o : %.c
+	mkdir -p $(OBJ)
+	$(CC) -o $@ $< -c $(CFLAGS)
