@@ -4,26 +4,69 @@
 #include "table.h"
 #include "dialog.h"
 
-void dialog_insert(Table * const table) {
+KeyType read_key() {
 	size_t len = 100;
+	KeyType key = NULL;
+	while (1) {
+		printf("Enter key: ");
+		if (getline(&key, &len, stdin) == -1) {
+			printf("Error: Value\n");
+			printf("Try again\n;");
+		} else {
+			break;
+		}
+	}
+	key[strcspn(key, "\n")] = '\0';
+	return key;
+}
+
+InfoType read_info() {
+	size_t len = 100;
+	InfoType info = NULL;
+	while (1) {
+		printf("Enter info: ");
+		if (getline(&info, &len, stdin) == -1) {
+			printf("Error: Value\n");
+			printf("Try again\n");
+		} else {
+			break;
+		}
+	}
+	info[strcspn(info, "\n")] = '\0';
+	return info;
+}
+
+RelType read_number() {
+	RelType number;
+	while(1) {
+		printf("Enter number (from 0 to infinity): ");
+		if (scanf("%zu", &number) != 1 || number <= 0) {
+			printf("Error: Value\n");
+			printf("Try again\n");
+		} else {
+			break;
+		}
+	}
+	return number;
+}
+
+void dialog_insert(Table * const table) {
+	if (!table || !table_initialized(table)) {
+		printf("Initialize the table first\n");
+		return;
+	}
 	if (table->csize >= table->msize) {
 		printf("Error: Table is full\n");
 		return;
 	}
-	printf("Enter key: ");
-	char *key = NULL;
-	if (getline(&key, &len, stdin) == -1) {
-		printf("Error: Value\n");
+	KeyType key = read_key();
+	if (!key) {
 		return;
 	}
-	key[strcspn(key, "\n")] = '\0';
-	printf("Enter info: ");
-	char *info = NULL;
-	if (getline(&info, &len, stdin) == -1) {
-		printf("Error: Value\n");
+	InfoType info = read_info();
+	if (!info) {
 		return;
 	}
-	info[strcspn(info, "\n")] = '\0';
 	table_err err = insert_element(table, key, info);
 	if (err == TABLE_NULL) {
 		printf("Error: Table is null\n");
@@ -38,14 +81,14 @@ void dialog_insert(Table * const table) {
 }
 
 void dialog_delete(Table * const table) {
-	size_t len = 100;
-	printf("Enter key: ");
-	char *key = NULL;
-	if (getline(&key, &len, stdin) == -1) {
-		printf("Error: Value\n");
+	if (!table || !table_initialized(table)) {
+		printf("Initialize the table first\n");
 		return;
 	}
-	key[strcspn(key, "\n")] = '\0';
+	KeyType key = read_key();
+	if (!key) {
+		return;
+	}
 	table_err err = delete_element(table, key);
 	if (err == TABLE_NULL) {
 		printf("Error: Table is null\n");
@@ -59,6 +102,10 @@ void dialog_delete(Table * const table) {
 }
 
 void dialog_print(Table * const table) {
+	if (!table || !table_initialized(table)) {
+		printf("Initialize the table first\n");
+		return;
+	}
 	if (print_table(table) != TABLE_OK) {
 		printf("Error: Table is null\n");
 	}
@@ -66,14 +113,14 @@ void dialog_print(Table * const table) {
 }
 
 void dialog_find(Table * const table) {
-	size_t len = 100;
-	printf("Enter key: ");
-	char *key = NULL;
-	if (getline(&key, &len, stdin) == -1) {
-		printf("Error\n");
+	if (!table || !table_initialized(table)) {
+		printf("Initialize the table first\n");
 		return;
 	}
-	key[strcspn(key, "\n")] = '\0';
+	KeyType key = read_key();
+	if (!key) {
+		return;
+	}
 	Table *result = search_by_key(table, key);
 	if (!result) {
 		printf("Error\n");
@@ -87,17 +134,18 @@ void dialog_find(Table * const table) {
 }
 
 void dialog_find_release(Table * const table) {
-	size_t len = 100;
-	printf("Enter key: ");
-	char *key = NULL;
-	if (getline(&key, &len, stdin) == -1) {
-		printf("Error\n");
+	if (!table || !table_initialized(table)) {
+		printf("Initialize the table first\n");
 		return;
 	}
-	key[strcspn(key, "\n")] = '\0';
-	printf("Enter version: ");
-	RelType version;
-	scanf("%zu", &version);
+	KeyType key = read_key();
+	if (!key) {
+		return;
+	}
+	RelType release = read_number();
+	if (release == (RelType)(-1)) {
+		return;
+	}
 	Table *result = search_by_key(table, key);
 	if (!result) {
 		printf("Error\n");
@@ -111,14 +159,10 @@ void dialog_find_release(Table * const table) {
 }
 
 void dialog_import(Table * const table) {
-	size_t len = 100;
-	printf("Enter filename: ");
-	char *filename = NULL;
-	if (getline(&filename, &len, stdin) == -1) {
-		printf("Error\n");
+	char *filename = read_info();
+	if (!filename) {
 		return;
 	}
-	filename[strcspn(filename, "\n")] = '\0';
 	table_err err = import_table_from_file(table, filename);
 	if (err == FILE_ERR) {
 		printf("Error: file\n");
@@ -151,21 +195,17 @@ void dialog_clean(Table * const table) {
 }
 
 void dialog_export(Table * const table) {
-	size_t len = 100;
-	if (table == NULL) {
-		printf("Error: table is empty\n");
+	if (!table || !table_initialized(table)) {
+		printf("Initialize the table first\n");
 		return;
 	}
-	printf("Enter filename: ");
-	char *filename = NULL;
-	if (getline(&filename, &len, stdin) == -1) {
-		printf("Error\n");
+	char *filename = read_info();
+	if (!filename) {
 		return;
 	}
-	filename[strcspn(filename, "\n")] = '\0';
 	table_err err = export_table_to_file(table, filename);
 	if (err == FILE_ERR) {
-		printf("Error: oppenin file\n");
+		printf("Error: opening file\n");
 		return;
 	}
 	printf("\n###Table exported successfully\n\n");
@@ -177,17 +217,7 @@ void dialog_init_table(Table *table) {
 		printf("Table has already been initialized\n");
 		return;
 	}
-	printf("Enter max size: ");
-	IndexType msize;
-	while (1) {
-		scanf("%zu", &msize);
-		if (msize <= 0) {
-			printf("The size must be greater than 0\n");
-			while (getchar() != '\n');
-		} else {
-			break;
-		}
-	}
+	IndexType msize = read_number();
 	table = init_table(table, msize);
 	printf("\n###Table initialized successfully\n\n");
 	return;

@@ -22,9 +22,9 @@ typedef size_t RelType;
 typedef size_t IndexType;
 
 typedef struct KeySpace {
-	KeyType *key;
+	KeyType key;
 	RelType release;
-	InfoType *info;
+	InfoType info;
 } KeySpace;
 
 typedef struct Table {

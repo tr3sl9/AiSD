@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall -Wextra
+gFLAGS=-g -Wall -Wextra
 CC=gcc
 OBJ=obj
 TARGET=table
@@ -6,13 +6,13 @@ TARGET=table
 SOURCES=$(wildcard *.c)
 OBJECTS=$(patsubst %.c,$(OBJ)/%.o,$(SOURCES))
 
-clean :
-	rm -fr $(OBJ)
-	rm -frv $(TARGET)
-
 $(TARGET) : $(OBJECTS)
 	mkdir -p $(dir $@)
 	$(CC) -o $@ $^ $(CFLAGS)
+
+clean :
+	rm -fr $(OBJ)
+	rm -frv $(TARGET)
 
 $(OBJ)/%.o : %.c
 	mkdir -p $(OBJ)

@@ -13,14 +13,9 @@ int main(){
 			printf("Choice: ");
 			if (scanf("%ld", &choice) == 1) {
 				while (getchar() != '\n');
-				if (!table_initialized(table) && ((choice >= 2 && choice <= 6) || choice == 8 || choice == 9)) {
-						printf("Initialize the table first\n");
-					}
-				else if (choice >= 1 && choice <= COUNT_OP + 1) {
+				if (choice >= 1 && choice <= COUNT_OP + 1) {
 					break;
 				}
-			} else {
-				while (getchar() != '\n');
 			}
 			printf("Invalid choice. Please enter a number between 1 and %d\n", COUNT_OP);
 		}
