@@ -1,8 +1,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include <wchar.h>
-#include <locale.h>
 #include "table.h"
 
 #define MAGIC_WORD "TABLE\n"
@@ -176,8 +174,10 @@ table_err import_table_from_file(Table * const table, const char * const filenam
 				return TABLE_FULL;
 			}
 			set_ks(table->ks + csize, key, info, (RelType)release);
+			table->csize++;
 		}
 	}
+	free(line);
 	fclose(file);
 	return TABLE_OK;
 }
@@ -197,57 +197,68 @@ table_err export_table_to_file(const Table * const table, const char * const fil
 }
 
 Table* search_by_key(Table * const table, const KeyType key) {
-	if (!table || !key) {
+	if (!table || !key || !table_initialized(table)) {
 		return NULL;
 	}
 	Table *result = create_table();
-	if (!table) {
-		return NULL;
-	}
-	result = init_table(table, 0);
 	if (!result) {
-		free(result);
 		return NULL;
 	}
+	size_t count  = 0;
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0) {
-				result->ks = (KeySpace*)realloc(result->ks, ((result->msize) + 1) * sizeof(KeySpace));
-				if (!result->ks) {
-					free_table(result);
-					return NULL;
-				}
-				init_ks(&result->ks[result->msize]);
-				set_ks(&result->ks[result->msize], table->ks[i].key, table->ks[i].info, table->ks[i].release);
-				result->msize++;
-			result->csize++;
+			count++;
 		}
 	}
+	if (!count) {
+		free_table(result);
+		return NULL;
+	}
+	result = init_table(table, count);
+	if (!result) {
+		return NULL;
+	}
+	IndexType index = 0;
+	for (IndexType i = 0; i < table->csize; i++) {
+		if (strcmp(table->ks[i].key, key) == 0) {
+			set_ks(result->ks + index, table->ks[i].key, table->ks[i].info, table->ks[i].release);
+			index++;
+		}
+	}
+	result->csize = index;
 	return result;
 }
 
 Table* search_by_key_with_release(Table * const table, const KeyType key, const RelType release) {
-	if (!table) {
-		return NULL;
-	}
-	if (!key || !release) {
+	if (!table || !key || !table_initialized(table)) {
 		return NULL;
 	}
 	Table *result = create_table();
-	result = init_table(table, 1);
 	if (!result) {
 		return NULL;
 	}
+	size_t count  = 0;
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
-			if (result->msize == result->csize) {
-				result->ks = (KeySpace*)realloc(result->ks, ((result->msize) + 1) * sizeof(KeySpace));
-				result->msize++;
-			}
-			set_ks(table->ks + table->csize, key, table->ks[i].info, release);
-			result->csize++;
-			break;
+			count++;
 		}
 	}
+	if (!count) {
+		free_table(result);
+		return NULL;
+	}
+	result = init_table(table, count);
+	if (!result) {
+		return NULL;
+	}
+	IndexType index = 0;
+	for (IndexType i = 0; i < table->csize; i++) {
+		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
+			set_ks(result->ks + index, table->ks[i].key, table->ks[i].info, table->ks[i].release);
+			index++;
+		}
+	}
+	result->csize = index;
 	return result;
 }
 
@@ -262,7 +273,7 @@ RelType find_release(Table * const table) {
 }
 
 table_err clean_table(Table* table) {
-	if (!table) return TABLE_NULL;
+	if (!table || !table_initialized(table)) return TABLE_NULL;
 	for (IndexType i = 0; i < table->csize; i++) {
 		Table *result = search_by_key(table, table->ks[i].key);
 		RelType release = find_release(result);
