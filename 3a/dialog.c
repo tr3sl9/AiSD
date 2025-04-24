@@ -122,13 +122,13 @@ void dialog_find(Table * const table) {
 		return;
 	}
 	Table *result = search_by_key(table, key);
-	if (!result || result->csize == 0) {
+	if (!result) {
 		printf("Error\n");
 		return;
-	} else {
-		printf("\n###Search results:\n\n");
-		print_table(result);
 	}
+	printf("\n###Search results:\n\n");
+	print_table(result);
+
 	free_table(result);
 	free(key);
 	return;
@@ -151,10 +151,9 @@ void dialog_find_release(Table * const table) {
 	if (!result || result->csize == 0) {
 		printf("Error\n");
 		return;
-	} else {
-		printf("\n###Search results:\n\n");
-		print_table(result);
 	}
+	printf("\n###Search results:\n\n");
+	print_table(result);
 	free_table(result);
 	free(key);
 	return;

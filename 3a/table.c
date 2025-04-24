@@ -200,32 +200,29 @@ Table* search_by_key(Table * const table, const KeyType key) {
 	if (!table || !key || !table_initialized(table)) {
 		return NULL;
 	}
-	Table *result = create_table();
-	if (!result) {
-		return NULL;
-	}
-	size_t count  = 0;
+	size_t count = 0;
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0) {
 			count++;
 		}
 	}
 	if (!count) {
-		free_table(result);
 		return NULL;
 	}
-	result = init_table(table, count);
+	Table *result = create_table();
 	if (!result) {
 		return NULL;
 	}
-	IndexType index = 0;
+	result = init_table(result, count);
+	if (!result) {
+		return NULL;
+	}
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0) {
-			set_ks(result->ks + index, table->ks[i].key, table->ks[i].info, table->ks[i].release);
-			index++;
+			set_ks(result->ks + result->csize, table->ks[i].key, table->ks[i].info, table->ks[i].release);
+			result->csize++;
 		}
 	}
-	result->csize = index;
 	return result;
 }
 
@@ -237,28 +234,16 @@ Table* search_by_key_with_release(Table * const table, const KeyType key, const 
 	if (!result) {
 		return NULL;
 	}
-	size_t count  = 0;
-	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
-			count++;
-		}
-	}
-	if (!count) {
-		free_table(result);
-		return NULL;
-	}
-	result = init_table(table, count);
+	result = init_table(result, 1);
 	if (!result) {
 		return NULL;
 	}
-	IndexType index = 0;
 	for (IndexType i = 0; i < table->csize; i++) {
 		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
-			set_ks(result->ks + index, table->ks[i].key, table->ks[i].info, table->ks[i].release);
-			index++;
+			set_ks(result->ks + result->csize, table->ks[i].key, table->ks[i].info, table->ks[i].release);
+			result->csize++;
 		}
 	}
-	result->csize = index;
 	return result;
 }
 
