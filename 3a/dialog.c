@@ -50,195 +50,101 @@ RelType read_number() {
 	return number;
 }
 
-void dialog_insert(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
+table_err dialog_insert(Table * const table) {
 	if (table->csize >= table->msize) {
-		printf("Error: Table is full\n");
-		return;
+		return TABLE_FULL;
 	}
 	KeyType key = read_key();
 	if (!key) {
-		return;
+		return TABLE_VAL;
 	}
 	InfoType info = read_info();
 	if (!info) {
-		return;
+		return TABLE_VAL;
 	}
-	table_err err = insert_element(table, key, info);
-	if (err == TABLE_NULL) {
-		printf("Error: Table is null\n");
-	}
-	else if (err == TABLE_VAL) {
-		printf("Error: Value\n");
-	}
+	table_err err = insert_key_to_table(table, key, info);
 	free(key);
 	free(info);
-	printf("\n###Information added successfully in table\n\n");
-	return;
+	return err;
 }
 
-void dialog_delete(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
+table_err dialog_delete(Table * const table) {
+	if (table->csize == 0) {
+		return TABLE_NULL;
 	}
 	KeyType key = read_key();
 	if (!key) {
-		return;
+		return TABLE_VAL;
 	}
-	table_err err = delete_element(table, key);
-	if (err == TABLE_NULL) {
-		printf("Error: Table is null\n");
-	}
-	else if (err == TABLE_VAL) {
-		printf("Error: Value\n");
-	}
+	table_err err = delete_key_from_table(table, key);
 	free(key);
-	printf("\n###Information deleted successfully from table\n\n");
-	return;
+	return err;
 }
 
-void dialog_print(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
-	if (print_table(table) != TABLE_OK) {
-		printf("Error: Table is null\n");
-	}
-	return;
+table_err dialog_print(Table * const table) {
+	return print_table(table);
 }
 
-void dialog_find(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
+table_err dialog_find(Table * const table) {
 	KeyType key = read_key();
 	if (!key) {
-		return;
+		return TABLE_VAL;
 	}
-	Table *result = search_by_key(table, key);
+	Table *result = search_by_key_in_table(table, key);
 	if (!result) {
-		printf("Error\n");
-		return;
+		return TABLE_NULL;
 	}
-	printf("\n###Search results:\n\n");
 	print_table(result);
-
 	free_table(result);
 	free(key);
-	return;
+	return TABLE_OK;
 }
 
-void dialog_find_release(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
+table_err dialog_find_release(Table * const table) {
 	KeyType key = read_key();
 	if (!key) {
-		return;
+		return TABLE_VAL;
 	}
 	RelType release = read_number();
 	if (release == (RelType)(-1)) {
-		return;
+		return TABLE_VAL;
 	}
-	Table *result = search_by_key_with_release(table, key, release);
+	Table *result = search_by_key_with_release_in_table(table, key, release);
 	if (!result || result->csize == 0) {
-		printf("Error\n");
-		return;
+		return TABLE_SIZE;
 	}
-	printf("\n###Search results:\n\n");
 	print_table(result);
 	free_table(result);
 	free(key);
-	return;
+	return TABLE_OK;
 }
 
-void dialog_import(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
+table_err dialog_import(Table * const table) {
 	char *filename = read_info();
 	if (!filename) {
-		return;
-	}
-	table_err err = import_table_from_file(table, filename);
-	if (err == FILE_ERR) {
-		printf("Error: file\n");
-		return;
-	}
-	else if (err == TABLE_MAGIC_WORD) {
-		printf("Error: magic_wrod in file\n");
-		return;
-	}
-	else if (err == TABLE_SIZE) {
-		printf("Error: table size\n");
-		return;
-	}
-	else if (err == TABLE_FULL) {
-		printf("Error: table full\n");
-		return;
-	}
-	printf("\n###Table imported successfully\n\n");
-	return;
+		return FILE_ERR;
+	} 
+	return import_table_from_file(table, filename);
 }
 
-void dialog_clean(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
-	table_err err = clean_table(table);
-	if (err == TABLE_NULL) {
-		printf("Error: table is null\n");
-		return;
-	}
-	printf("\n###Table cleaned successfully\n\n");
-	return;
+table_err dialog_clean(Table * const table) {
+	return clean_table(table);
 }
 
-void dialog_export(Table * const table) {
-	if (!table || !table_initialized(table)) {
-		printf("Initialize the table first\n");
-		return;
-	}
+table_err dialog_export(Table * const table) {
 	char *filename = read_info();
 	if (!filename) {
-		return;
+		return FILE_ERR;
 	}
-	table_err err = export_table_to_file(table, filename);
-	if (err == FILE_ERR) {
-		printf("Error: opening file\n");
-		return;
-	}
-	printf("\n###Table exported successfully\n\n");
-	return;
+	return export_table_to_file(table, filename);
 }
 
-void dialog_init_table(Table *table) {
-	if (table_initialized(table)) {
-		printf("Table has already been initialized\n");
-		return;
-	}
-	IndexType msize = read_number();
-	table = init_table(table, msize);
-	printf("\n###Table initialized successfully\n\n");
-	return;
-}
-
-void dialog_exit(Table * const table) {
+table_err dialog_exit(Table * const table) {
 	exit_from_prog(table);
-	return;
+	return TABLE_EXIT;
 }
 
 const functions operation[] = {
-	dialog_init_table,
 	dialog_insert,
 	dialog_delete,
 	dialog_find,
@@ -251,7 +157,6 @@ const functions operation[] = {
 };
 
 const char *menu_items[COUNT_OP] = {
-	"Init table",
 	"Insert element",
 	"Delete by key",
 	"Search by key",
@@ -265,20 +170,31 @@ const char *menu_items[COUNT_OP] = {
 
 void show_menu() {
 	for (size_t i = 0; i < COUNT_OP; i++) {
-		printf("%zu. %s\n", i + 1, menu_items[i]);
+		printf("[%zu]: %s\n", i + 1, menu_items[i]);
 	}
 	return;
 }
 
-void process_choice(Table *table, size_t choice) {
+int process_choice(Table *table, size_t choice) {
 	if (choice < 1 || choice > COUNT_OP) {
 		printf("Invalid choice\n");
-		return;
+		return 0;
 	}
-	if (choice == COUNT_OP + 1) {
-		dialog_exit(table);
-	} else {
-		operation[choice - 1](table);
-	}
-	return;
+	table_err err = operation[choice - 1](table);
+	switch (err) {
+        case TABLE_OK: printf("ALL'S OKAY\n"); break;
+		case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
+		case TABLE_FULL: printf("Error: Table is full\n"); break;
+		case TABLE_MEM: printf("Error: Memory allocation failed\n"); break;
+		case TABLE_NULL: printf("Error: Table is null\n"); break;
+		case TABLE_VAL: printf("Error: value\n"); break;
+		case TABLE_SIZE: printf("Error: Table size mismatch\n"); break;
+		case TABLE_MAGIC_WORD: printf("Error: Invalid file format\n"); break;
+        case FILE_ERR: printf("Error: Cannot open file\n"); break;
+		case TABLE_EOF: printf("Error: EOF\n"); break;					   
+        case TABLE_EXIT: printf("EXIT\n"); break;
+        default: printf("Unknown error\n");
+    }
+	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
+	return 0;
 }

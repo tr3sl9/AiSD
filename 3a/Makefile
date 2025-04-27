@@ -1,4 +1,4 @@
-gFLAGS=-g -Wall -Wextra
+CFLAGS=-g -Wall -Wextra
 CC=gcc
 OBJ=obj
 TARGET=table

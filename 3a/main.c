@@ -4,8 +4,12 @@
 #include "table.h"
 #include "dialog.h"
 
-int main(){
-	Table *table = create_table();
+int main(int argc, char **argv){
+	if (argc != 2) {
+		printf("Error: not enough argumetns\n");
+		return 0;
+	}
+	Table *table = create_table(atoi(argv[1]));
 	size_t choice;
 	while (1) {
 		show_menu();
@@ -19,7 +23,7 @@ int main(){
 			}
 			printf("Invalid choice. Please enter a number between 1 and %d\n", COUNT_OP);
 		}
-		process_choice(table, choice);
+		if (process_choice(table, choice) == 1) break;
 	}
 	return 0;
 }

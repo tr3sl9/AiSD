@@ -9,20 +9,8 @@ int table_initialized(Table *table) {
 	return table->ks != NULL; 
 } 
 
-Table *create_table() {
+Table *create_table(const IndexType msize) {
 	Table *table = (Table*)calloc(1, sizeof(Table));
-	return table;
-}
-
-void init_ks(KeySpace * const ks) {
-	if (!ks) return;
-	ks->key = (KeyType)calloc(1, sizeof(char));
-	ks->info = (InfoType)calloc(1, sizeof(char));
-	ks->release = 0;
-	return;
-}
-
-Table *init_table(Table * const table, const IndexType msize) {
 	if (table == NULL) {
 		return NULL;
 	}
@@ -30,9 +18,6 @@ Table *init_table(Table * const table, const IndexType msize) {
 	if (table->ks == NULL) {
 		free(table);
 		return NULL;
-	}
-	for (IndexType i = 0; i < msize; i++) {
-		init_ks(table->ks + i);
 	}
 	table->msize = msize;
 	table->csize = 0;
@@ -43,12 +28,13 @@ void free_ks(KeySpace * const ks) {
 	if (!ks) {
 		return;
 	}
-	if (ks->key) {
-		free(ks->key);
-	}
-	if (ks->info) {
-		free(ks->info);
-	}
+	free(ks->key);
+	free(ks->info);
+	return;
+}
+
+void rm_element_by_null(KeySpace *ks) {
+	ks->key = NULL;
 	return;
 }
 
@@ -79,7 +65,7 @@ void set_ks(KeySpace * const ks, const KeyType key, const InfoType info, const R
 	return;
 }
 
-table_err insert_element(Table * const table, const KeyType key, const InfoType info) {
+table_err insert_key_to_table(Table * const table, const KeyType key, const InfoType info) {
 	if (!table) return TABLE_NULL;
 	if (!key || !info) return TABLE_VAL;
 	if (table->csize >= table->msize) return TABLE_FULL;	
@@ -89,19 +75,67 @@ table_err insert_element(Table * const table, const KeyType key, const InfoType 
 	return TABLE_OK;
 }
 
-table_err delete_element(Table * const table, const KeyType key) {
+void shifting_elements_from_table(Table * const table) {
+	IndexType j = 0;
+	for (IndexType i = 0; i < table->msize; i++) {
+		if (table->ks[j].key == NULL) {
+			if (i != j) {
+				set_ks(table->ks + j, table->ks[i].key, table->ks[i].info, table->ks[i].release);
+				rm_element_by_null(table->ks + i);
+				j++;
+			}
+		} else {
+			j++;
+		}
+	}
+	return;
+}
+
+KeySpace **find_elements(const Table * const table, KeyType const key, size_t *count) {
+	for (IndexType i = 0; i < table->csize; i++) {
+		if (strcmp(table->ks[i].key, key) == 0) {
+			(*count)++;
+		}
+	}
+	KeySpace **key_space_for_res_table = (KeySpace**)calloc(*count, sizeof(KeySpace*));
+	if (!key_space_for_res_table) return NULL;
+	IndexType idx = 0;
+	for (IndexType i = 0; i < table->csize; i++) {
+		if (strcmp(table->ks[i].key, key) == 0) {
+			key_space_for_res_table[idx] = table->ks + i;
+			idx++;
+		}
+	}
+	return key_space_for_res_table;
+}
+
+KeySpace *find_element_with_release(const Table * const table, const KeyType key, const RelType release) {
+	for (IndexType i = 0; i < table->csize; i++) {
+		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
+			return table->ks + i;
+		}
+	}
+	return NULL;
+}
+
+table_err delete_key_from_table(Table * const table, const KeyType key) {
 	if (!table) {
 		return TABLE_NULL;
 	}
 	if (!key) {
 		return TABLE_VAL;
 	}
-    for (IndexType i = 0; i < table->csize; i++) {
-        if (strcmp(table->ks[i].key, key) == 0) {
-            free_ks(table->ks + i);
-            table->csize--;
-        }
-    }
+	size_t count = 0;
+	KeySpace **ks = find_elements(table, key, &count);
+	if (!ks) {
+		return TABLE_VAL;
+	}
+	for (IndexType i = 0; i < count; i++) {
+		rm_element_by_null(ks[i]);
+		if (table->csize != 0) table->csize--; 
+	}
+	free(ks);
+	shifting_elements_from_table(table); 
 	return TABLE_OK;
 }
 
@@ -112,12 +146,13 @@ table_err delete_element_with_release(Table * const table, const KeyType key, co
 	if (!key) {
 		return TABLE_VAL;
 	}
-    for (IndexType i = 0; i < table->csize; i++) {
-        if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release < release) {
-            free_ks(table->ks + i);
-            table->csize--;
-        }
-    }
+	KeySpace *ks = find_element_with_release(table, key, release);
+	if (!ks) {
+		return TABLE_VAL;
+	}
+	rm_element_by_null(ks);
+    if (table->csize != 0) table->csize--;
+	shifting_elements_from_table(table);
 	return TABLE_OK;
 }
 
@@ -158,13 +193,13 @@ table_err import_table_from_file(Table * const table, const char * const filenam
         fclose(file);
         return TABLE_SIZE;
     }
-    if (msize != table->msize) {
+    if (csize > msize) {
         fclose(file);
         return TABLE_SIZE;
     }
 	size_t len = 100;
 	char *line = NULL;
-	while (getline(&line, &len, file) != -1) {
+	while (table->csize <= table->msize && getline(&line, &len, file) != -1) {
 		KeyType key = strtok(line, ":");
 		char *release = strtok(NULL, ":");
 		InfoType info = strtok(NULL, "\n");
@@ -173,7 +208,7 @@ table_err import_table_from_file(Table * const table, const char * const filenam
 				fclose(file);
 				return TABLE_FULL;
 			}
-			set_ks(table->ks + csize, key, info, (RelType)release);
+			set_ks(table->ks + table->csize, key, info, atoi(release));
 			table->csize++;
 		}
 	}
@@ -196,54 +231,41 @@ table_err export_table_to_file(const Table * const table, const char * const fil
 	return TABLE_OK;
 }
 
-Table* search_by_key(Table * const table, const KeyType key) {
+Table* search_by_key_in_table(Table * const table, const KeyType key) {
 	if (!table || !key || !table_initialized(table)) {
 		return NULL;
 	}
 	size_t count = 0;
-	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0) {
-			count++;
-		}
-	}
-	if (!count) {
+	KeySpace **ks = find_elements(table, key, &count);
+	if (!ks) {
 		return NULL;
-	}
-	Table *result = create_table();
+	} 
+	Table *result = create_table(count);
 	if (!result) {
 		return NULL;
 	}
-	result = init_table(result, count);
-	if (!result) {
-		return NULL;
+	for (IndexType i = 0; i < result->msize; i++) {
+		set_ks(result->ks + result->csize, ks[i]->key, ks[i]->info, ks[i]->release);
+		result->csize++;
 	}
-	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0) {
-			set_ks(result->ks + result->csize, table->ks[i].key, table->ks[i].info, table->ks[i].release);
-			result->csize++;
-		}
-	}
+	free(ks);
 	return result;
 }
 
-Table* search_by_key_with_release(Table * const table, const KeyType key, const RelType release) {
+Table* search_by_key_with_release_in_table(Table * const table, const KeyType key, const RelType release) {
 	if (!table || !key || !table_initialized(table)) {
 		return NULL;
 	}
-	Table *result = create_table();
+	Table *result = create_table(1);
 	if (!result) {
 		return NULL;
 	}
-	result = init_table(result, 1);
-	if (!result) {
+	KeySpace *ks = find_element_with_release(table, key, release);
+	if (!(result->ks)) {
 		return NULL;
 	}
-	for (IndexType i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
-			set_ks(result->ks + result->csize, table->ks[i].key, table->ks[i].info, table->ks[i].release);
-			result->csize++;
-		}
-	}
+	set_ks(result->ks, ks->key, ks->info, ks->release);
+	result->csize++;
 	return result;
 }
 
@@ -260,7 +282,7 @@ RelType find_release(Table * const table) {
 table_err clean_table(Table* table) {
 	if (!table || !table_initialized(table)) return TABLE_NULL;
 	for (IndexType i = 0; i < table->csize; i++) {
-		Table *result = search_by_key(table, table->ks[i].key);
+		Table *result = search_by_key_in_table(table, table->ks[i].key);
 		RelType release = find_release(result);
 		free_table(result);
 		table_err err = delete_element_with_release(table, table->ks[i].key, release);
@@ -273,5 +295,5 @@ table_err clean_table(Table* table) {
 void exit_from_prog(Table * const table) {
 	free_table(table);
 	printf("Exit\n");
-	exit(0);
+	return;
 }

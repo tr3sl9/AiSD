@@ -1,21 +1,20 @@
 #ifndef DIALOG_H
 #define DIALOG_H
 #include "table.h"
-#define COUNT_OP 10
-typedef void (*functions)(struct Table*);
+#define COUNT_OP 9
+typedef table_err (*functions)(struct Table*);
 
-void dialog_insert(Table*);
-void dialog_delete(Table*);
-void dialog_print(Table*);
-void dialog_find(Table*);
-void dialog_find_release(Table*);
-void dialog_import(Table*);
-void dialog_clean(Table*);
-void dialog_export(Table*);
-void dialog_export(Table*);
-void dialog_init_table(Table*);
+table_err dialog_insert(Table*);
+table_err dialog_delete(Table*);
+table_err dialog_print(Table*);
+table_err dialog_find(Table*);
+table_err dialog_find_release(Table*);
+table_err dialog_import(Table*);
+table_err dialog_clean(Table*);
+table_err dialog_export(Table*);
+table_err dialog_export(Table*);
+table_err dialog_exit(Table*);
 void show_menu();
-void dialog_exit(Table*);
-void process_choice(Table*, size_t choice);
+int process_choice(Table*, size_t choice);
 
 #endif
