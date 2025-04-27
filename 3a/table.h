@@ -36,8 +36,7 @@ typedef struct Table {
 
 void init_key_space(KeySpace *ks);
 int table_initialized(Table*);
-Table *create_table();
-Table *init_table(Table *, const IndexType);
+Table *create_table(const IndexType);
 void free_table(Table*);
 table_err insert_key_to_table(Table*, const KeyType key, const InfoType info);
 table_err delete_key_from_table(Table*, const KeyType);

@@ -7,7 +7,11 @@
 int main(int argc, char **argv){
 	if (argc != 2) {
 		printf("Error: not enough argumetns\n");
-		return 0;
+		return 1;
+	}
+	if (atoi(argv[1]) <= 0) {
+		printf("Error: table size mismatch\n");
+		return 1;
 	}
 	Table *table = create_table(atoi(argv[1]));
 	size_t choice;
