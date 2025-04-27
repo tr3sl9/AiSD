@@ -291,9 +291,3 @@ table_err clean_table(Table* table) {
 	}
 	return TABLE_OK;
 }
-
-void exit_from_prog(Table * const table) {
-	free_table(table);
-	printf("Exit\n");
-	return;
-}

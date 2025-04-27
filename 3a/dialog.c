@@ -10,8 +10,8 @@ KeyType read_key() {
 	while (1) {
 		printf("Enter key: ");
 		if (getline(&key, &len, stdin) == -1) {
-			printf("Error: Value\n");
-			printf("Try again\n;");
+			free(key);
+			return NULL;
 		} else {
 			break;
 		}
@@ -26,8 +26,8 @@ InfoType read_info() {
 	while (1) {
 		printf("Enter info: ");
 		if (getline(&info, &len, stdin) == -1) {
-			printf("Error: Value\n");
-			printf("Try again\n");
+			free(info);
+			return NULL;
 		} else {
 			break;
 		}
@@ -40,10 +40,12 @@ RelType read_number() {
 	RelType number;
 	while(1) {
 		printf("Enter number (from 0 to infinity): ");
-		if (scanf("%zu", &number) != 1 || number <= 0) {
-			printf("Error: Value\n");
-			printf("Try again\n");
-		} else {
+		if (scanf("%zu", &number) == EOF) {
+			return EOF;
+		} 
+		else if (number <= 0) {
+			printf("Error: Value\nTry again\n");
+		}else {
 			break;
 		}
 	}
@@ -56,11 +58,12 @@ table_err dialog_insert(Table * const table) {
 	}
 	KeyType key = read_key();
 	if (!key) {
-		return TABLE_VAL;
+		free(key);
+		return TABLE_EOF;
 	}
 	InfoType info = read_info();
 	if (!info) {
-		return TABLE_VAL;
+		return TABLE_EOF;
 	}
 	table_err err = insert_key_to_table(table, key, info);
 	free(key);
@@ -74,7 +77,7 @@ table_err dialog_delete(Table * const table) {
 	}
 	KeyType key = read_key();
 	if (!key) {
-		return TABLE_VAL;
+		return TABLE_EOF;
 	}
 	table_err err = delete_key_from_table(table, key);
 	free(key);
@@ -88,7 +91,7 @@ table_err dialog_print(Table * const table) {
 table_err dialog_find(Table * const table) {
 	KeyType key = read_key();
 	if (!key) {
-		return TABLE_VAL;
+		return TABLE_EOF;
 	}
 	Table *result = search_by_key_in_table(table, key);
 	if (!result) {
@@ -103,11 +106,11 @@ table_err dialog_find(Table * const table) {
 table_err dialog_find_release(Table * const table) {
 	KeyType key = read_key();
 	if (!key) {
-		return TABLE_VAL;
+		return TABLE_EOF;
 	}
 	RelType release = read_number();
-	if (release == (RelType)(-1)) {
-		return TABLE_VAL;
+	if (release == (RelType)(EOF)) {
+		return TABLE_EOF;
 	}
 	Table *result = search_by_key_with_release_in_table(table, key, release);
 	if (!result || result->csize == 0) {
@@ -140,7 +143,6 @@ table_err dialog_export(Table * const table) {
 }
 
 table_err dialog_exit(Table * const table) {
-	exit_from_prog(table);
 	return TABLE_EXIT;
 }
 
@@ -195,6 +197,6 @@ int process_choice(Table *table, size_t choice) {
         case TABLE_EXIT: printf("EXIT\n"); break;
         default: printf("Unknown error\n");
     }
-	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
+	if (err == TABLE_EOF || err == TABLE_EXIT || err == FILE_ERR) return 1;
 	return 0;
 }

@@ -47,6 +47,5 @@ table_err export_table_to_file(const Table*, const char*);
 Table* search_by_key_in_table(Table*, const KeyType);
 Table* search_by_key_with_release_in_table(Table*, const KeyType, const RelType);
 table_err clean_table(Table*);
-void exit_from_prog(Table*);
 
 #endif
