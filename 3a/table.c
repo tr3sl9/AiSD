@@ -5,6 +5,10 @@
 
 #define MAGIC_WORD "TABLE\n"
 
+int cmp(char *str_1, char *str_2) {
+	return strcmp(str1, str2);
+}
+
 int table_initialized(const Table * const table) {
 	return table->ks != NULL; 
 } 
@@ -50,7 +54,7 @@ void free_table(Table * const table) {
 size_t find_last_release(const Table * const table, const char * const key) {
 	size_t release = 0;
 	for (size_t i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0) {
+		if (cmp(table->ks[i].key, key) == 0) {
 			release++;
 		}
 	}
@@ -91,7 +95,7 @@ void shifting_elements_from_table(Table * const table) {
 
 KeySpace **find_elements(const Table * const table, const char * const key, size_t * const count) {
 	for (size_t i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0) {
+		if (cmp(table->ks[i].key, key) == 0) {
 			(*count)++;
 		}
 	}
@@ -99,7 +103,7 @@ KeySpace **find_elements(const Table * const table, const char * const key, size
 	if (!key_space_for_res_table) return NULL;
 	size_t idx = 0;
 	for (size_t i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0) {
+		if (cmp(table->ks[i].key, key) == 0) {
 			key_space_for_res_table[idx] = table->ks + i;
 			idx++;
 		}
@@ -109,7 +113,7 @@ KeySpace **find_elements(const Table * const table, const char * const key, size
 
 KeySpace *find_element_with_release(const Table * const table, const char * const key, const size_t release) {
 	for (size_t i = 0; i < table->csize; i++) {
-		if (strcmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
+		if (cmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
 			return table->ks + i;
 		}
 	}
@@ -182,7 +186,7 @@ table_err import_table_from_file(Table * const table, const char * const filenam
 	}
 	char magic_word[sizeof(MAGIC_WORD)] = {0};
 	fgets(magic_word, sizeof(magic_word), file);
-	if (strcmp(magic_word, MAGIC_WORD) != 0) {
+	if (cmp(magic_word, MAGIC_WORD) != 0) {
 		fclose(file);
 		return TABLE_MAGIC_WORD;
 	}

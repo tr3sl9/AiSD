@@ -15,25 +15,28 @@ int main(int argc, char **argv){
 	}
 	Table *table = create_table(atoi(argv[1]));
 	size_t choice;
-	while (1) {
+	char new_line = ' ';
+	int eof_err = 0;
+	while (eof_err != EOF) {
 		show_menu();
-		while (1) {
-			printf("Choice: ");
-			if (scanf("%ld", &choice) != EOF) {
-				while (getchar() != '\n');
-				if (choice >= 1 && choice <= COUNT_OP + 1) {
-					break;
-				}
-			} else {
+		printf("Choice: ");
+		if (scanf("%zu", &choice) == EOF) {
+			free_table(table);
+			eof_err = EOF;
+			return 1;
+		}
+		else if (choice >= 1 && choice <= COUNT_OP + 1) {
+			if (process_choice(table, choice) == 1) {
 				free_table(table);
-				return 1;
+				return 0;
 			}
+		} else {
 			printf("Invalid choice. Please enter a number between 1 and %d\n", COUNT_OP);
 		}
-		if (process_choice(table, choice) == 1) {
-			free_table(table);
-			break;
+		while (new_line != '\n') {
+			scanf("%c", &new_line);
 		}
 	}
-	return 0;
+	free_table(table);
+	return 1;
 }
