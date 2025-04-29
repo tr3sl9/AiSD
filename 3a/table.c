@@ -5,13 +5,21 @@
 
 #define MAGIC_WORD "TABLE\n"
 
-int cmp(char *str_1, char *str_2) {
-	return strcmp(str1, str2);
+int cmp(const char * const str_1, const char * const str_2) {
+	return strcmp(str_1, str_2);
 }
 
 int table_initialized(const Table * const table) {
 	return table->ks != NULL; 
-} 
+}
+
+void set_ks(KeySpace * const ks, const char * const key, const char * const info, const size_t release) {
+	if (!ks || !key || !info) return;
+	ks->key = strdup(key);
+	if (release != 0) ks->release = release;
+	ks->info = strdup(info);
+	return;
+}
 
 Table *create_table(const size_t msize) {
 	Table *table = (Table*)calloc(1, sizeof(Table));
@@ -37,8 +45,10 @@ void free_ks(KeySpace * const ks) {
 	return;
 }
 
-void rm_element(KeySpace * const ks) {
-	ks->key = NULL;
+void rm_element(KeySpace * const current_ks, KeySpace * const last_ks) {
+	free_ks(current_ks);
+	set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
+	free_ks(last_ks);
 	return;
 }
 
@@ -61,14 +71,6 @@ size_t find_last_release(const Table * const table, const char * const key) {
 	return release;
 }
 
-void set_ks(KeySpace * const ks, const char * const key, const char * const info, const size_t release) {
-	if (!ks || !key || !info) return;
-	ks->key = strdup(key);
-	if (release != 0) ks->release = release;
-	ks->info = strdup(info);
-	return;
-}
-
 table_err insert_key_to_table(Table * const table, const char * const key, const char * const info) {
 	if (!table) return TABLE_NULL;
 	if (!key || !info) return TABLE_VAL;
@@ -77,20 +79,6 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
 	set_ks(table->ks + table->csize, key, info, release + 1);
 	table->csize++;
 	return TABLE_OK;
-}
-
-void shifting_elements_from_table(Table * const table) {
-	size_t j = 0;
-	for (size_t i = 0; i < table->msize; i++) {
-		if (table->ks[j].key == NULL && table->ks[i].key != NULL) {
-			if (i != j) {
-				set_ks(table->ks + j, table->ks[i].key, table->ks[i].info, table->ks[i].release);
-				rm_element(table->ks + i);
-				j++; 
-			}
-		}
-	}
-	return;
 }
 
 KeySpace **find_elements(const Table * const table, const char * const key, size_t * const count) {
@@ -132,12 +120,11 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 	if (!ks) {
 		return TABLE_VAL;
 	}
-	for (size_t i = 0; i < count; i++) {
-		rm_element(ks[i]);
+	for (size_t i = 0; i < count && table->csize > 0; i++) {
+		rm_element(ks[i], table->ks + table->csize - 1);
 		if (table->csize != 0) table->csize--; 
 	}
 	free(ks);
-	shifting_elements_from_table(table); 
 	return TABLE_OK;
 }
 
@@ -152,9 +139,10 @@ table_err delete_element_with_release(Table * const table, const char * const ke
 	if (!ks) {
 		return TABLE_VAL;
 	}
-	rm_element(ks);
-    if (table->csize != 0) table->csize--;
-	shifting_elements_from_table(table);
+	if (table->csize > 0) {
+		rm_element(ks, table->ks + table->csize - 1);
+		table->csize--;
+	}
 	return TABLE_OK;
 }
 
@@ -293,7 +281,6 @@ table_err clean_table(Table * const table) {
 				err = delete_element_with_release(table, table->ks[i].key, result->ks[j].release);
 			}
 		}
-		shifting_elements_from_table(table);
 		free_table(result);
 		if (err != TABLE_OK) return err;
 	}
