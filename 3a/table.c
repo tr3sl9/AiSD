@@ -13,6 +13,10 @@ int table_initialized(const Table * const table) {
 	return table->ks != NULL; 
 }
 
+int it_is_not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
+	return ks1->key != ks2->key || ks1->info != ks2->info || ks1->release != ks2->release;
+}
+
 void set_ks(KeySpace * const ks, const char * const key, const char * const info, const size_t release) {
 	if (!ks || !key || !info) return;
 	ks->key = strdup(key);
@@ -45,10 +49,13 @@ void free_ks(KeySpace * const ks) {
 	return;
 }
 
-void rm_element(KeySpace * const current_ks, KeySpace * const last_ks) {
-	free_ks(current_ks);
-	set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
-	free_ks(last_ks);
+void rm_element_with_shift(KeySpace * const current_ks, KeySpace * const last_ks) {
+	if (it_is_not_same_ks(current_ks, last_ks)) {
+		free_ks(current_ks);
+		set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
+	} else {
+		free_ks(last_ks);
+	}
 	return;
 }
 
@@ -117,11 +124,12 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 	}
 	size_t count = 0;
 	KeySpace **ks = find_elements(table, key, &count);
-	if (!ks) {
+	if (!count) {
+		free(ks);
 		return TABLE_VAL;
 	}
-	for (size_t i = 0; i < count && table->csize > 0; i++) {
-		rm_element(ks[i], table->ks + table->csize - 1);
+	for (size_t i = 0; i < count; i++) {
+		rm_element_with_shift(ks[i], table->ks + table->csize - 1);
 		if (table->csize != 0) table->csize--; 
 	}
 	free(ks);
@@ -140,7 +148,7 @@ table_err delete_element_with_release(Table * const table, const char * const ke
 		return TABLE_VAL;
 	}
 	if (table->csize > 0) {
-		rm_element(ks, table->ks + table->csize - 1);
+		rm_element_with_shift(ks, table->ks + table->csize - 1);
 		table->csize--;
 	}
 	return TABLE_OK;
