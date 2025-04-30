@@ -26,15 +26,15 @@ int main(int argc, char **argv){
             return 1;
         }
         else if (err != 1) {
-			printf("Invalid input. Please enter a number.\n");
+			printf("Invalid input. Please enter a number.\n");\
 			while (new_line != '\n') {
 				scanf("%c", &new_line);
 			}
             continue;
         }
 		while (new_line != '\n') {
-			scanf("%c", &new_line);
-		}         
+				scanf("%c", &new_line);
+		}
 		if (choice < 1 || choice > COUNT_OP) {
             printf("Invalide choice. Please enter number between 1 and %d\n", COUNT_OP);
             continue;

@@ -5,6 +5,11 @@
 
 #define MAGIC_WORD "TABLE\n"
 
+void print_ks(const KeySpace * const ks, const size_t i) {
+	printf("| %-5zu | %-30s | %-9zu | %-20s |\n", i, ks->key, ks->release, ks->info);
+	return;
+}
+
 int cmp(const char * const str_1, const char * const str_2) {
 	return strcmp(str_1, str_2);
 }
@@ -14,7 +19,8 @@ int table_initialized(const Table * const table) {
 }
 
 int it_is_not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
-	return ks1->key != ks2->key || ks1->info != ks2->info || ks1->release != ks2->release;
+	if (ks1 == NULL || ks2 == NULL) return 0;
+	return !(cmp(ks1->key, ks2->key) == 0 && ks1->release == ks2->release && cmp(ks1->info, ks2->info) == 0);
 }
 
 void set_ks(KeySpace * const ks, const char * const key, const char * const info, const size_t release) {
@@ -53,9 +59,8 @@ void rm_element_with_shift(KeySpace * const current_ks, KeySpace * const last_ks
 	if (it_is_not_same_ks(current_ks, last_ks)) {
 		free_ks(current_ks);
 		set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
-	} else {
-		free_ks(last_ks);
-	}
+	} 
+	free_ks(last_ks);
 	return;
 }
 
@@ -128,8 +133,8 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 		free(ks);
 		return TABLE_VAL;
 	}
-	for (size_t i = 0; i < count; i++) {
-		rm_element_with_shift(ks[i], table->ks + table->csize - 1);
+	for (size_t i = count; i > 0; i--) {
+		rm_element_with_shift(ks[i - 1], table->ks + table->csize - 1);
 		if (table->csize != 0) table->csize--; 
 	}
 	free(ks);
@@ -152,11 +157,6 @@ table_err delete_element_with_release(Table * const table, const char * const ke
 		table->csize--;
 	}
 	return TABLE_OK;
-}
-
-void print_ks(const KeySpace * const ks, const size_t i) {
-	printf("| %-5zu | %-30s | %-9zu | %-20s |\n", i, ks->key, ks->release, ks->info);
-	return;
 }
 
 table_err print_table(const Table * const table) {
@@ -267,11 +267,11 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
 	return result;
 }
 
-size_t find_max_release(const Table * const table) {
+size_t find_max_release(const KeySpace * const ks, const size_t count) {
 	size_t release = 0;
-	for (size_t i = 0; i < table->csize; i++) {
-		if (release < table->ks[i].release) {
-			release = table->ks[i].release;
+	for (size_t i = 0; i < count; i++) {
+		if (release < ks[i].release) {
+			release = ks[i].release;
 		}
 	}
 	return release;
@@ -281,16 +281,16 @@ table_err clean_table(Table * const table) {
 	if (!table || !table_initialized(table)) return TABLE_NULL;
 	table_err err = TABLE_OK;
 	for (size_t i = 0; i < table->csize; i++) {
-		Table *result = search_by_key_in_table(table, table->ks[i].key);
-		if (!result) continue;
-		size_t release = find_max_release(result);
-		for (size_t j = 0; i < result->csize; j++) {
-			if (result->ks[j].release < release) {
-				err = delete_element_with_release(table, table->ks[i].key, result->ks[j].release);
+		size_t count = 0;
+		KeySpace **ks = find_elements(table, table->ks[i].key, &count);
+		size_t release = find_max_release(*ks, count);
+		for (size_t i = count; i > 0; i--) {
+			if (release > ks[i - 1]->release) {
+				rm_element_with_shift(ks[i - 1], table->ks + table->csize - 1);
+				if (table->csize != 0) table->csize--;
 			}
 		}
-		free_table(result);
-		if (err != TABLE_OK) return err;
+		free(ks);
 	}
 	return err;
 }
