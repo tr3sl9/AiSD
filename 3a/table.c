@@ -284,10 +284,11 @@ table_err clean_table(Table * const table) {
 		size_t count = 0;
 		KeySpace **ks = find_elements(table, table->ks[i].key, &count);
 		size_t release = find_max_release(*ks, count);
-		for (size_t i = count; i > 0; i--) {
-			if (release > ks[i - 1]->release) {
-				rm_element_with_shift(ks[i - 1], table->ks + table->csize - 1);
+		for (size_t j = count; j > 0; j--) {
+			if (release > ks[j - 1]->release) {
+				rm_element_with_shift(ks[j - 1], table->ks + table->csize - 1);
 				if (table->csize != 0) table->csize--;
+				i--;
 			}
 		}
 		free(ks);
