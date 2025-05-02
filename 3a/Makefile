@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall -Wextra -Werror
+CFLAGS=-g -Wall -Wextra -Werror -lreadline
 CC=gcc
 OBJ=obj
 TARGET=table

@@ -1,38 +1,38 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <readline/readline.h>
 #include "table.h"
 #include "dialog.h"
 
+#define PROMPT_FOR_KEY "Enter key: "
+#define PROMPT_FOR_INFO "Enter inof: "
+
 char* read_key() {
-	size_t len = 100;
 	char* key = NULL;
 	while (1) {
-		printf("Enter key: ");
-		if (getline(&key, &len, stdin) == -1) {
+		key = readline(PROMPT_FOR_KEY);
+		if (key == NULL) {
 			free(key);
 			return NULL;
 		} else {
 			break;
 		}
 	}
-	key[strcspn(key, "\n")] = '\0';
 	return key;
 }
 
 char* read_info() {
-	size_t len = 100;
 	char* info = NULL;
 	while (1) {
-		printf("Enter info: ");
-		if (getline(&info, &len, stdin) == -1) {
+		info = readline(PROMPT_FOR_INFO);
+		if (info == NULL) {
 			free(info);
 			return NULL;
 		} else {
 			break;
 		}
 	}
-	info[strcspn(info, "\n")] = '\0';
 	return info;
 }
 
