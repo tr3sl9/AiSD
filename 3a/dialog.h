@@ -1,7 +1,6 @@
 #ifndef DIALOG_H
 #define DIALOG_H
 #include "table.h"
-#define COUNT_OP 9
 typedef table_err (*functions)(struct Table*);
 
 table_err dialog_insert(Table* const);

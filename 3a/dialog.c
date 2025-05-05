@@ -175,7 +175,7 @@ const functions operation[] = {
 	dialog_clean,
 };
 
-const char *menu_items[COUNT_OP] = {
+const char *menu_items[sizeof(operation) / sizeof(functions) + 1] = {
 	"Insert element",
 	"Delete by key",
 	"Search by key",
@@ -188,14 +188,14 @@ const char *menu_items[COUNT_OP] = {
 };
 
 void show_menu() {
-	for (size_t i = 0; i < COUNT_OP; i++) {
+	for (size_t i = 0; i < sizeof(operation) / sizeof(functions) + 1; i++) {
 		printf("[%zu]: %s\n", i + 1, menu_items[i]);
 	}
 	return;
 }
 
 int process_choice(Table *table, size_t choice) {
-	if (choice < 1 || choice > COUNT_OP) {
+	if (choice < 1 || choice > sizeof(operation) / sizeof(functions) + 1) {
 		printf("Invalid choice\n");
 		return 0;
 	}

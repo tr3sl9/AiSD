@@ -19,8 +19,8 @@ int main(int argc, char **argv){
         show_menu();
         printf("Choice: ");
 		char new_line = ' ';
-        int choice;
-        err = scanf("%d", &choice);
+        size_t choice;
+        err = scanf("%zu", &choice);
         if (err == EOF) {
 			free_table(table);
             return 1;
@@ -35,8 +35,8 @@ int main(int argc, char **argv){
 		while (new_line != '\n') {
 				scanf("%c", &new_line);
 		}
-		if (choice < 1 || choice > COUNT_OP) {
-            printf("Invalide choice. Please enter number between 1 and %d\n", COUNT_OP);
+		if (choice < 1 || choice > 9) {
+            printf("Invalide choice. Please enter number between 1 and 9\n");
             continue;
         }
         if (process_choice(table, choice) == 1) {
