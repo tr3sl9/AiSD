@@ -4,17 +4,17 @@
 #define COUNT_OP 9
 typedef table_err (*functions)(struct Table*);
 
-table_err dialog_insert(Table*);
-table_err dialog_delete(Table*);
-table_err dialog_print(Table*);
-table_err dialog_find(Table*);
-table_err dialog_find_release(Table*);
-table_err dialog_import(Table*);
-table_err dialog_clean(Table*);
-table_err dialog_export(Table*);
-table_err dialog_export(Table*);
-table_err dialog_exit(Table*);
+table_err dialog_insert(Table* const);
+table_err dialog_delete(Table* const);
+table_err dialog_print(Table* const);
+table_err dialog_find(Table* const);
+table_err dialog_find_release(Table* const);
+table_err dialog_import(Table* const);
+table_err dialog_clean(Table* const);
+table_err dialog_export(Table* const);
+table_err dialog_export(Table* const);
+table_err dialog_exit(Table* const);
 void show_menu();
-int process_choice(Table*, size_t choice);
+int process_choice(Table* const, size_t choice);
 
 #endif

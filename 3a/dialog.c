@@ -6,7 +6,7 @@
 #include "dialog.h"
 
 #define PROMPT_FOR_KEY "Enter key: "
-#define PROMPT_FOR_INFO "Enter inof: "
+#define PROMPT_FOR_INFO "Enter info: "
 
 char* read_key() {
 	char* key = NULL;
