@@ -14,10 +14,6 @@ int cmp(const char * const str_1, const char * const str_2) {
 	return strcmp(str_1, str_2);
 }
 
-int table_initialized(const Table * const table) {
-	return table->ks != NULL; 
-}
-
 int it_is_not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
 	if (ks1 == NULL || ks2 == NULL) return 0;
 	return !(cmp(ks1->key, ks2->key) == 0 && ks1->release == ks2->release && cmp(ks1->info, ks2->info) == 0);
@@ -230,7 +226,7 @@ table_err export_table_to_file(const Table * const table, const char * const fil
 }
 
 Table* search_by_key_in_table(const Table * const table, const char * const key) {
-	if (!table || !key || !table_initialized(table)) {
+	if (!table || !key) {
 		return NULL;
 	}
 	size_t count = 0;
@@ -251,7 +247,7 @@ Table* search_by_key_in_table(const Table * const table, const char * const key)
 }
 
 Table* search_by_key_with_release_in_table(const Table * const table, const char * const key, const size_t release) {
-	if (!table || !key || !table_initialized(table)) {
+	if (!table || !key) {
 		return NULL;
 	}
 	Table *result = create_table(1);
@@ -278,7 +274,7 @@ size_t find_max_release(const KeySpace * const ks, const size_t count) {
 }
 
 table_err clean_table(Table * const table) {
-	if (!table || !table_initialized(table)) return TABLE_NULL;
+	if (!table) return TABLE_NULL;
 	table_err err = TABLE_OK;
 	for (size_t i = 0; i < table->csize; i++) {
 		size_t count = 0;
