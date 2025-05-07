@@ -7,7 +7,7 @@ SOURCES=$(wildcard *.c)
 OBJECTS=$(patsubst %.c,$(OBJ)/%.o,$(SOURCES))
 
 $(TARGET) : $(OBJECTS)
-	mkdir -p $(dir $@)
+	@mkdir -p $(dir $@)
 	$(CC) -o $@ $^ $(CFLAGS)
 
 clean :
@@ -15,5 +15,5 @@ clean :
 	rm -frv $(TARGET)
 
 $(OBJ)/%.o : %.c
-	mkdir -p $(OBJ)
+	@mkdir -p $(OBJ)
 	$(CC) -o $@ $< -c $(CFLAGS)

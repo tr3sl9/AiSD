@@ -10,7 +10,7 @@
 
 char* read_key() {
 	char* key = NULL;
-	while (1) {
+	while (!key) {
 		key = readline(PROMPT_FOR_KEY);
 		if (key == NULL) {
 			free(key);
@@ -24,7 +24,7 @@ char* read_key() {
 
 char* read_info() {
 	char* info = NULL;
-	while (1) {
+	while (!info) {
 		info = readline(PROMPT_FOR_INFO);
 		if (info == NULL) {
 			free(info);
@@ -37,16 +37,24 @@ char* read_info() {
 }
 
 size_t read_number() {
-	size_t number;
-	while(1) {
-		printf("Enter number (from 0 to infinity): ");
-		if (scanf("%zu", &number) == EOF) {
-			return EOF;
-		} 
-		else if (number <= 0) {
+	int err = 0;
+	ssize_t number;
+	while(err != 1) {
+		printf("Enter number (from 1 to infinity): ");
+		err = scanf("%zd", &number);
+		if (err == 0) {
 			printf("Error: Value\nTry again\n");
+			scanf("%*[^\n]");
+		} 
+		else if (err == EOF) {
+			return TABLE_EOF;
 		}else {
-			break;
+			if (number < 1) {
+				err = 0;
+				printf("The entered number must be greater than 0 and less than or equal to infinity!\n");
+				printf("Enter the number again\n");
+				scanf("%*[^\n]");
+			}
 		}
 	}
 	return number;
@@ -120,14 +128,14 @@ table_err dialog_find_release(Table * const table) {
 		free(key);
 		return TABLE_EOF;
 	}
-	size_t release = read_number();
-	if (release == (size_t)(EOF)) {
+	ssize_t release = read_number();
+	if (release == EOF) {
 		free(key);
 		return TABLE_EOF;
 	}
 	Table *result = search_by_key_with_release_in_table(table, key, release);
 	if (!result || result->csize == 0) {
-		return TABLE_SIZE;
+		return TABLE_VAL;
 	}
 	print_table(result);
 	free_table(result);
@@ -151,9 +159,6 @@ table_err dialog_clean(Table * const table) {
 }
 
 table_err dialog_export(Table * const table) {
-	if (table->csize != 0) {
-		return TABLE_SIZE;
-	}
 	char *filename = read_info();
 	if (!filename) {
 		free(filename);
@@ -194,17 +199,7 @@ void show_menu() {
 	return;
 }
 
-int process_choice(Table *table, size_t choice) {
-	if (choice < 1 || choice > sizeof(operation) / sizeof(functions) + 1) {
-		printf("Invalid choice\n");
-		return 0;
-	}
-	table_err err = TABLE_OK;
-	if (strcmp(menu_items[choice - 1], "EXIT") == 0) {
-		err = TABLE_EXIT;
-	} else {
-		err = operation[choice - 1](table);
-	}
+void function(const table_err err) {
 	switch (err) {
         case TABLE_OK: printf("ALL'S OKAY\n"); break;
 		case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
@@ -218,7 +213,22 @@ int process_choice(Table *table, size_t choice) {
 		case TABLE_EOF: printf("Error: EOF\n"); break;					   
         case TABLE_EXIT: printf("EXIT\n"); break;
         default: printf("Unknown error\n");
-    }
+	}
+	return;
+}
+
+int process_choice(Table *table, size_t choice) {
+	if (choice < 1 || choice > sizeof(operation) / sizeof(functions) + 1) {
+		printf("Invalid choice\n");
+		return 0;
+	}
+	table_err err = TABLE_OK;
+	if (choice == sizeof(operation) / sizeof(functions) + 1) {
+		err = TABLE_EXIT;
+	} else {
+		err = operation[choice - 1](table);
+	}
+	function(err);
 	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
 	return 0;
 }

@@ -3,46 +3,29 @@
 #include <stdlib.h>
 #include "table.h"
 #include "dialog.h"
+#include "testing.h"
 
 int main(int argc, char **argv){
 	if (argc != 2) {
 		printf("Error: not enough argumetns\n");
 		return 1;
 	}
-	if (atoi(argv[1]) <= 0) {
+	size_t atoi_argv_1 = atoi(argv[1]);
+	if (atoi_argv_1 <= 0) {
 		printf("Error: table size mismatch\n");
 		return 1;
 	}
-	Table *table = create_table(atoi(argv[1]));
-	int err = 1;
-	while (err != EOF) {
-        show_menu();
-        printf("Choice: ");
-		char new_line = ' ';
-        size_t choice;
-        err = scanf("%zu", &choice);
-        if (err == EOF) {
+	Table *table = create_table(atoi_argv_1);
+	int end_program = 0;
+	while (end_program != 1){
+		show_menu();
+		size_t choice;
+		if(check_error(&choice, 0, 9) == TABLE_EOF) {
 			free_table(table);
-            return 1;
-        }
-        else if (err != 1) {
-			printf("Invalid input. Please enter a number.\n");\
-			while (new_line != '\n') {
-				scanf("%c", &new_line);
-			}
-            continue;
-        }
-		while (new_line != '\n') {
-				scanf("%c", &new_line);
+			return 1;
 		}
-		if (choice < 1 || choice > 9) {
-            printf("Invalide choice. Please enter number between 1 and 9\n");
-            continue;
-        }
-        if (process_choice(table, choice) == 1) {
-            break;
-        }
-    }
+		end_program = process_choice(table, choice);
+	}
 	free_table(table);
-	return 1;
+	return 0;
 }

@@ -171,6 +171,46 @@ table_err print_table(const Table * const table) {
     return TABLE_OK;
 }
 
+void realloc_attribute(char **atr, size_t *capacity) {
+	(*capacity) *= 2;
+	*atr = (char*)realloc(*atr, *capacity * sizeof(char));
+	return;
+}
+
+void create_attribute(char **atr, size_t *capacity) {
+	*capacity = BUFSIZ;
+	*atr = (char*)malloc(*capacity * sizeof(char));
+	return;
+}
+
+table_err read_row(char **atr, FILE *file, size_t *capacity) {
+	ssize_t c;
+	size_t current_len = 0;
+	if (!atr || !*atr || !capacity) {
+		return TABLE_VAL;
+	}
+	while((c = fgetc(file)) != EOF && c != '\n') {
+		if (current_len + 1 >= *capacity) {
+			realloc_attribute(atr, capacity);
+			if (!*atr) {
+				return TABLE_MEM;
+			}
+		}
+		(*atr)[current_len++] = (char)c;
+	}
+	if (current_len == 0 && c == EOF) {
+		return TABLE_EOF;
+	}
+	if (current_len + 1 >= *capacity) {
+		realloc_attribute(atr, capacity);
+	}
+	if (!*atr) {
+		return TABLE_MEM;
+	}
+	(*atr)[current_len] = '\0';
+    return TABLE_OK;
+}
+
 table_err import_table_from_file(Table * const table, const char * const filename) {
 	FILE *file = fopen(filename, "r");
 	if (!file) {
@@ -187,28 +227,48 @@ table_err import_table_from_file(Table * const table, const char * const filenam
         fclose(file);
         return TABLE_SIZE;
     }
-    if (csize > msize) {
+    if (csize > msize || msize == 0) {
         fclose(file);
         return TABLE_SIZE;
     }
-	size_t len = 100;
-	char *line = NULL;
-	while (table->csize <= table->msize && getline(&line, &len, file) != -1) {
-		char* key = strtok(line, ":");
-		char *release = strtok(NULL, ":");
-		char* info = strtok(NULL, "\n");
-		if (key && info && release) {
-			if (table->csize >= table->msize) {
-				fclose(file);
-				return TABLE_FULL;
-			}
-			set_ks(table->ks + table->csize, key, info, atoi(release));
-			table->csize++;
-		}
+	char empty_line[2];
+	fgets(empty_line, sizeof(empty_line), file);
+	size_t key_capacity = 0, info_capacity = 0;
+	char *key = NULL, *info = NULL;
+	ssize_t release;
+	create_attribute(&key, &key_capacity);
+	if (!key) {
+		fclose(file);
+		return TABLE_MEM;
+	}	
+	create_attribute(&info, &info_capacity);
+	if (!info) {
+		free(key);
+		fclose(file);
+		return TABLE_MEM;
 	}
-	free(line);
+	table_err result = TABLE_OK;
+	while (table->csize <= table->msize) {
+		result = read_row(&key, file, &key_capacity);
+		if (result != TABLE_OK) {
+			break;
+		}
+		if (fscanf(file, "%zd\n", &release) != 1 || release < 1) {
+			result = TABLE_VAL;
+			break;
+		}
+		result = read_row(&info, file, &info_capacity);
+		if (result != TABLE_OK) {
+			break;
+		}
+		fgets(empty_line, sizeof(empty_line), file);
+		set_ks(table->ks + table->csize, key, info, release);
+		table->csize++;
+	}
+	free(key);
+	free(info);
 	fclose(file);
-	return TABLE_OK;
+	return result;
 }
 
 table_err export_table_to_file(const Table * const table, const char * const filename) {
@@ -219,7 +279,8 @@ table_err export_table_to_file(const Table * const table, const char * const fil
 	fprintf(file, "%s", MAGIC_WORD);
 	fprintf(file, "%zu %zu\n", table->msize, table->csize);
 	for (size_t i = 0; i < table->csize; i++) {
-		fprintf(file, "%s:%zu:%s\n", table->ks[i].key, table->ks[i].release, table->ks[i].info);
+		fprintf(file, "\n");
+		fprintf(file, "%s\n%zu\n%s\n", table->ks[i].key, table->ks[i].release, table->ks[i].info);
 	}
 	fclose(file);
 	return TABLE_OK;
@@ -255,7 +316,7 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
 		return NULL;
 	}
 	KeySpace *ks = find_element_with_release(table, key, release);
-	if (!(result->ks)) {
+	if (!ks) {
 		return NULL;
 	}
 	set_ks(result->ks, ks->key, ks->info, ks->release);
