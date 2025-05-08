@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall -Wextra -Werror -lreadline
+CFLAGS=-g -Wall -Wextra -Werror -lreadline -Wno-implicit-fallthrough 
 CC=gcc
 OBJ=obj
 TARGET=table
