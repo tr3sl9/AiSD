@@ -1,0 +1,263 @@
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <readline/readline.h>
+#include "table.h"
+#include "dialog.h"
+
+#define PROMPT_FOR_KEY "Enter key: "
+#define PROMPT_FOR_INFO "Enter info: "
+
+char* read_key() {
+	char* key = NULL;
+	while (!key) {
+		key = readline(PROMPT_FOR_KEY);
+		if (key == NULL) {
+			free(key);
+			return NULL;
+		} else {
+			break;
+		}
+	}
+	return key;
+}
+
+char* read_info() {
+	char* info = NULL;
+	while (!info) {
+		info = readline(PROMPT_FOR_INFO);
+		if (info == NULL) {
+			free(info);
+			return NULL;
+		} else {
+			break;
+		}
+	}
+	return info;
+}
+
+size_t read_number() {
+	int err = 0;
+	ssize_t number;
+	while(err != 1) {
+		printf("Enter number (from 1 to infinity): ");
+		err = scanf("%zd", &number);
+		if (err == 0) {
+			printf("Error: Value\nTry again\n");
+			scanf("%*[^\n]");
+		} 
+		else if (err == EOF) {
+			return TABLE_EOF;
+		}else {
+			if (number < 1) {
+				err = 0;
+				printf("The entered number must be greater than 0 and less than or equal to infinity!\n");
+				printf("Enter the number again\n");
+				scanf("%*[^\n]");
+			}
+		}
+	}
+	return number;
+}	
+
+table_err dialog_insert(Table * const table) {
+	if (table->csize >= table->msize) {
+		return TABLE_FULL;
+	}
+
+	char *key = read_key();
+	if (!key) {
+		free(key);
+		return TABLE_EOF;
+	}
+
+	ssize_t info = read_number();
+	if (info == TABLE_EOF) {
+		free(key);
+		return TABLE_EOF;
+	}
+
+	table_err err = insert_key_to_table(table, key, (size_t)info);
+
+	free(key);
+	return err;
+}
+
+table_err dialog_delete(Table * const table) {
+    if (table->csize == 0) {
+		return TABLE_EMPTY;
+	}
+    
+    char* key = read_key();
+    if (!key) {
+		free(key);
+		return TABLE_EOF;
+	}
+
+    table_err err = delete_key_from_table(table, key);
+
+    free(key);
+    return err;
+}
+
+table_err dialog_find(Table * const table) {
+    if (table->csize == 0) {
+		return TABLE_EMPTY;
+	}
+    
+    char* key = read_key();
+    if (!key) {
+		free(key);
+		return TABLE_EOF;
+	}
+
+	size_t count_key = 0; 
+    KeySpace* elements = search_by_key_in_table(table, key, &count_key);
+    if (!elements) {
+        free(key);
+        return TABLE_VAL;
+    }
+    
+    printf("\nFound %zu elements with key '%s':\n", count_key, key);
+    printf("┌───────────┬──────────────────────┐\n");
+    printf("│ Release   │ Info                 │\n");
+    printf("├───────────┼──────────────────────┤\n");
+    for (size_t i = 0; i < count_key; i++) {
+        printf("│ %-9zu │ %-20zu │\n", elements[i].release, *(elements[i].info));
+        if (i < count_key - 1) {
+            printf("├───────────┼──────────────────────┤\n");
+        }
+    }
+    printf("└───────────┴──────────────────────┘\n");
+    
+    free(elements);
+    free(key);
+    return TABLE_OK;
+}
+
+table_err dialog_find_release(Table * const table) {
+    if (table->csize == 0) {
+		return TABLE_EMPTY;
+	}
+    
+    char* key = read_key();
+    if (!key) {
+		free(key);
+		return TABLE_EOF;
+	}
+    
+    ssize_t release = read_number();
+    if (release == EOF) {
+        free(key);
+        return TABLE_EOF;
+    }
+    
+    KeySpace* element = search_by_key_with_release_in_table(table, key, release);
+    if (!element) {
+        free(key);
+        return TABLE_VAL;
+    }
+    
+    printf("\nFound element with key '%s' and release %zu:\n", key, release);
+    printf("┌──────────────────────┐\n");
+    printf("│ Info                 │\n");
+    printf("├──────────────────────┤\n");
+    printf("│ %-20zu │\n", *(element->info));
+    printf("└──────────────────────┘\n");
+    
+    free(key);
+    return TABLE_OK;
+}
+
+table_err dialog_print(Table * const table) {
+    return print_table(table);
+}
+
+table_err dialog_import(Table * const table) {
+    char* filename = read_info();
+    if (!filename) {
+		free(filename);
+		return FILE_ERR;
+	}
+    
+    table_err err = import_table_from_file(table, filename);
+    free(filename);
+    return err;
+}
+
+table_err dialog_export(Table * const table) {
+    char* filename = read_info();
+    if (!filename) {
+		free(filename);
+		return TABLE_EOF;
+	}
+    
+    table_err err = export_table_to_file(table, filename);
+    free(filename);
+    return err;
+}
+
+const functions operation[] = {
+    dialog_insert,
+    dialog_delete,
+    dialog_find,
+    dialog_find_release,
+    dialog_print,
+    dialog_import,
+    dialog_export
+};
+
+const char *menu_items[] = {
+    "Insert element",
+    "Delete by key",
+    "Search by key",
+    "Search by key and release",
+    "Print table",
+    "Import from file",
+    "Export to file",
+    "Exit"
+};
+
+void show_menu() {
+    printf("\nMenu:\n");
+    for (size_t i = 0; i < sizeof(operation) / sizeof(functions) + 1; i++) {
+        printf("[%zu]: %s\n", i + 1, menu_items[i]);
+    }
+    printf("\n");
+	return;
+}
+
+void function(const table_err err) {
+    switch (err) {
+        case TABLE_OK: printf("Operation completed successfully\n"); break;
+        case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
+        case TABLE_FULL: printf("Error: Table is full\n"); break;
+        case TABLE_MEM: printf("Error: Memory allocation failed\n"); break;
+        case TABLE_NULL: printf("Error: Table is null\n"); break;
+        case TABLE_VAL: printf("Error: Invalid value\n"); break;
+        case TABLE_SIZE: printf("Error: Table size mismatch\n"); break;
+        case TABLE_MAGIC_WORD: printf("Error: Invalid file format\n"); break;
+        case FILE_ERR: printf("Error: Cannot open file\n"); break;
+        case TABLE_EOF: printf("Error: EOF\n"); break;
+        case TABLE_EXIT: printf("EXIT\n"); break;
+        default: printf("Unknown error\n");
+    }
+}
+
+int process_choice(Table *table, size_t choice) {
+	if (choice < 1 || choice > sizeof(operation) / sizeof(functions) + 1) {
+		printf("Invalid choice\n");
+		return 0;
+	}
+
+	table_err err = TABLE_OK;
+	if (choice == sizeof(operation) / sizeof(functions) + 1) {
+		err = TABLE_EXIT;
+	} else {
+		err = operation[choice - 1](table);
+	}
+
+	function(err);
+	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
+	return 0;
+}

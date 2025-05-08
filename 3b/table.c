@@ -148,10 +148,13 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 
 KeySpace* search_by_key_with_release_in_table(const Table * const table, const char * const key, const size_t release) {
     if (!table || !key) return NULL;
+
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
     size_t pos = h1;
+
 	KeySpace *found_key_with_release = (KeySpace*)calloc(1, sizeof(KeySpace));
+
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0 && table->ks[pos].release == release) {
             set_ks(found_key_with_release, BUSY, key, *(table->ks[pos].info), release);
@@ -161,13 +164,15 @@ KeySpace* search_by_key_with_release_in_table(const Table * const table, const c
             break;
         }
         pos = (pos + h2) % table->msize;
-    } 
+    }
+
     return NULL;
 }
 
-static size_t count_of_key_in_table(const Table * const table, const char * const key, size_t h1, size_t h2) {
+static size_t count_key_in_table(const Table * const table, const char * const key, size_t h1, size_t h2) {
 	size_t count = 0;
 	size_t pos = h1;
+
 	for (size_t i = 0; i < table->msize; i++) {
 		if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
 			count++;
@@ -177,17 +182,18 @@ static size_t count_of_key_in_table(const Table * const table, const char * cons
 		}
 		pos = (pos + h2) % table->msize;
 	}
+
 	return count;
 }
 
-KeySpace* search_by_key_in_table(const Table * const table, const char * const key) {
+KeySpace* search_by_key_in_table(const Table * const table, const char * const key, size_t * const count_key) {
     if (!table || !key) return NULL;
 
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
 
-    size_t count_of_key = count_of_key_in_table(table, key, h1, h2);
-    KeySpace* result = (KeySpace*)calloc(count_of_key, sizeof(KeySpace));
+    *count_key = count_key_in_table(table, key, h1, h2);
+    KeySpace* result = (KeySpace*)calloc(*count_key, sizeof(KeySpace));
 
     size_t pos = h1;
 	size_t capacity = 0;
@@ -200,6 +206,7 @@ KeySpace* search_by_key_in_table(const Table * const table, const char * const k
         }
         pos = (pos + h2) % table->msize;
     }
+
     return result;
 }
 

@@ -47,7 +47,7 @@ table_err delete_key_from_table(Table * const, const char * const key);
 table_err print_table(const Table * const);
 
 KeySpace* search_by_key_with_release_in_table(const Table * const, const char * const key, const size_t release);
-KeySpace* search_by_key_in_table(const Table * const, const char * const key);
+KeySpace* search_by_key_in_table(const Table * const, const char * const key, size_t * const count_key);
 
 table_err import_table_from_file(Table * const, const char * const filename);
 table_err export_table_to_file(const Table * const, const char * const filename);
