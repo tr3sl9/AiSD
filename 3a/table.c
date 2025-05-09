@@ -14,7 +14,7 @@ int cmp(const char * const str_1, const char * const str_2) {
 	return strcmp(str_1, str_2);
 }
 
-int it_is_not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
+int not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
 	if (ks1 == NULL || ks2 == NULL) return 0;
 	return !(cmp(ks1->key, ks2->key) == 0 && ks1->release == ks2->release && cmp(ks1->info, ks2->info) == 0);
 }
@@ -52,7 +52,7 @@ void free_ks(KeySpace * const ks) {
 }
 
 void rm_element_with_shift(KeySpace * const current_ks, KeySpace * const last_ks) {
-	if (it_is_not_same_ks(current_ks, last_ks)) {
+	if (not_same_ks(current_ks, last_ks)) {
 		free_ks(current_ks);
 		set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
 	} 
