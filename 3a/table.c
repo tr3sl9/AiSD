@@ -51,7 +51,7 @@ void free_ks(KeySpace * const ks) {
 	return;
 }
 
-void rm_element_with_shift(KeySpace * const current_ks, KeySpace * const last_ks) {
+void rm_element_with_move(KeySpace * const current_ks, KeySpace * const last_ks) {
 	if (not_same_ks(current_ks, last_ks)) {
 		free_ks(current_ks);
 		set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
@@ -130,7 +130,7 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 		return TABLE_VAL;
 	}
 	for (size_t i = count; i > 0; i--) {
-		rm_element_with_shift(ks[i - 1], table->ks + table->csize - 1);
+		rm_element_with_move(ks[i - 1], table->ks + table->csize - 1);
 		if (table->csize != 0) table->csize--; 
 	}
 	free(ks);
@@ -149,7 +149,7 @@ table_err delete_element_with_release(Table * const table, const char * const ke
 		return TABLE_VAL;
 	}
 	if (table->csize > 0) {
-		rm_element_with_shift(ks, table->ks + table->csize - 1);
+		rm_element_with_move(ks, table->ks + table->csize - 1);
 		table->csize--;
 	}
 	return TABLE_OK;
@@ -343,7 +343,7 @@ table_err clean_table(Table * const table) {
 		size_t release = find_max_release(*ks, count);
 		for (size_t j = count; j > 0; j--) {
 			if (release > ks[j - 1]->release) {
-				rm_element_with_shift(ks[j - 1], table->ks + table->csize - 1);
+				rm_element_with_move(ks[j - 1], table->ks + table->csize - 1);
 				if (table->csize != 0) table->csize--;
 				i--;
 			}
