@@ -7,6 +7,7 @@
 
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
+#define COUNT_OP sizeof(operation) / sizeof(functions) + 1
 
 char* read_key() {
 	char* key = NULL;
@@ -180,7 +181,7 @@ const functions operation[] = {
 	dialog_clean,
 };
 
-const char *menu_items[sizeof(operation) / sizeof(functions) + 1] = {
+const char *menu_items[COUNT_OP] = {
 	"Insert element",
 	"Delete by key",
 	"Search by key",
@@ -193,7 +194,7 @@ const char *menu_items[sizeof(operation) / sizeof(functions) + 1] = {
 };
 
 void show_menu() {
-	for (size_t i = 0; i < sizeof(operation) / sizeof(functions) + 1; i++) {
+	for (size_t i = 0; i < COUNT_OP; i++) {
 		printf("[%zu]: %s\n", i + 1, menu_items[i]);
 	}
 	return;
@@ -218,12 +219,12 @@ void function(const table_err err) {
 }
 
 int process_choice(Table *table, size_t choice) {
-	if (choice < 1 || choice > sizeof(operation) / sizeof(functions) + 1) {
+	if (choice < 1 || choice > COUNT_OP) {
 		printf("Invalid choice\n");
 		return 0;
 	}
 	table_err err = TABLE_OK;
-	if (choice == sizeof(operation) / sizeof(functions) + 1) {
+	if (choice == COUNT_OP) {
 		err = TABLE_EXIT;
 	} else {
 		err = operation[choice - 1](table);
