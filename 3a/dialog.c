@@ -9,7 +9,7 @@
 #define PROMPT_FOR_INFO "Enter info: "
 #define COUNT_OP sizeof(operation) / sizeof(functions) + 1
 
-char* read_key() {
+static char* read_key() {
 	char* key = NULL;
 	while (!key) {
 		key = readline(PROMPT_FOR_KEY);
@@ -23,7 +23,7 @@ char* read_key() {
 	return key;
 }
 
-char* read_info() {
+static char* read_info() {
 	char* info = NULL;
 	while (!info) {
 		info = readline(PROMPT_FOR_INFO);
@@ -37,7 +37,7 @@ char* read_info() {
 	return info;
 }
 
-size_t read_number() {
+static size_t read_number() {
 	int err = 0;
 	ssize_t number;
 	while(err != 1) {
@@ -61,7 +61,7 @@ size_t read_number() {
 	return number;
 }
 
-table_err dialog_insert(Table * const table) {
+static table_err dialog_insert(Table * const table) {
 	if (table->csize >= table->msize) {
 		return TABLE_FULL;
 	}
@@ -82,7 +82,7 @@ table_err dialog_insert(Table * const table) {
 	return err;
 }
 
-table_err dialog_delete(Table * const table) {
+static table_err dialog_delete(Table * const table) {
 	if (table->csize == 0) {
 		return TABLE_NULL;
 	}
@@ -96,11 +96,11 @@ table_err dialog_delete(Table * const table) {
 	return err;
 }
 
-table_err dialog_print(Table * const table) {
+static table_err dialog_print(Table * const table) {
 	return print_table(table);
 }
 
-table_err dialog_find(Table * const table) {
+static table_err dialog_find(Table * const table) {
 	if (table->csize == 0) {
 		return TABLE_NULL;
 	}
@@ -120,7 +120,7 @@ table_err dialog_find(Table * const table) {
 	return TABLE_OK;
 }
 
-table_err dialog_find_release(Table * const table) {
+static table_err dialog_find_release(Table * const table) {
 	if (table->csize == 0) {
 		return TABLE_NULL;
 	}
@@ -144,7 +144,7 @@ table_err dialog_find_release(Table * const table) {
 	return TABLE_OK;
 }
 
-table_err dialog_import(Table * const table) {
+static table_err dialog_import(Table * const table) {
 	char *filename = read_info();
 	if (!filename) {
 		free(filename);
@@ -155,11 +155,11 @@ table_err dialog_import(Table * const table) {
 	return err;
 }
 
-table_err dialog_clean(Table * const table) {
+static table_err dialog_clean(Table * const table) {
 	return clean_table(table);
 }
 
-table_err dialog_export(Table * const table) {
+static table_err dialog_export(Table * const table) {
 	char *filename = read_info();
 	if (!filename) {
 		free(filename);
@@ -200,7 +200,7 @@ void show_menu() {
 	return;
 }
 
-void choice_mess_from_table_err(const table_err err) {
+static void choice_mess_from_table_err(const table_err err) {
 	switch (err) {
         case TABLE_OK: printf("ALL'S OKAY\n"); break;
 		case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
