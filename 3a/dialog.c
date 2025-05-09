@@ -200,7 +200,7 @@ void show_menu() {
 	return;
 }
 
-void function(const table_err err) {
+void choice_mess_from_table_err(const table_err err) {
 	switch (err) {
         case TABLE_OK: printf("ALL'S OKAY\n"); break;
 		case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
@@ -229,7 +229,7 @@ int process_choice(Table *table, size_t choice) {
 	} else {
 		err = operation[choice - 1](table);
 	}
-	function(err);
+	choice_mess_from_table_err(err);
 	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
 	return 0;
 }
