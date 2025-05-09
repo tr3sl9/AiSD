@@ -10,16 +10,16 @@ void print_ks(const KeySpace * const ks, const size_t i) {
 	return;
 }
 
-int cmp(const char * const str_1, const char * const str_2) {
+static int cmp(const char * const str_1, const char * const str_2) {
 	return strcmp(str_1, str_2);
 }
 
-int not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
+static int not_same_ks(const KeySpace * const ks1, const KeySpace * const ks2) {
 	if (ks1 == NULL || ks2 == NULL) return 0;
 	return !(cmp(ks1->key, ks2->key) == 0 && ks1->release == ks2->release && cmp(ks1->info, ks2->info) == 0);
 }
 
-void set_ks(KeySpace * const ks, const char * const key, const char * const info, const size_t release) {
+static void set_ks(KeySpace * const ks, const char * const key, const char * const info, const size_t release) {
 	if (!ks || !key || !info) return;
 	ks->key = strdup(key);
 	if (release != 0) ks->release = release;
@@ -42,7 +42,7 @@ Table *create_table(const size_t msize) {
 	return table;
 }
 
-void free_ks(KeySpace * const ks) {
+static void free_ks(KeySpace * const ks) {
 	if (!ks) {
 		return;
 	}
@@ -51,7 +51,7 @@ void free_ks(KeySpace * const ks) {
 	return;
 }
 
-void rm_element_with_move(KeySpace * const current_ks, KeySpace * const last_ks) {
+static void rm_element_with_move(KeySpace * const current_ks, KeySpace * const last_ks) {
 	if (not_same_ks(current_ks, last_ks)) {
 		free_ks(current_ks);
 		set_ks(current_ks, last_ks->key, last_ks->info, last_ks->release);
@@ -69,7 +69,7 @@ void free_table(Table * const table) {
 	return;
 }
 
-size_t find_last_release(const Table * const table, const char * const key) {
+static size_t find_last_release(const Table * const table, const char * const key) {
 	size_t release = 0;
 	for (size_t i = 0; i < table->csize; i++) {
 		if (cmp(table->ks[i].key, key) == 0) {
@@ -89,7 +89,7 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
 	return TABLE_OK;
 }
 
-KeySpace **find_elements(const Table * const table, const char * const key, size_t * const count) {
+static KeySpace **find_elements(const Table * const table, const char * const key, size_t * const count) {
 	for (size_t i = 0; i < table->csize; i++) {
 		if (cmp(table->ks[i].key, key) == 0) {
 			(*count)++;
@@ -107,7 +107,7 @@ KeySpace **find_elements(const Table * const table, const char * const key, size
 	return key_space_for_res_table;
 }
 
-KeySpace *find_element_with_release(const Table * const table, const char * const key, const size_t release) {
+static KeySpace *find_element_with_release(const Table * const table, const char * const key, const size_t release) {
 	for (size_t i = 0; i < table->csize; i++) {
 		if (cmp(table->ks[i].key, key) == 0 && table->ks[i].release == release) {
 			return table->ks + i;
@@ -171,19 +171,19 @@ table_err print_table(const Table * const table) {
     return TABLE_OK;
 }
 
-void realloc_attribute(char **atr, size_t *capacity) {
+static void realloc_attribute(char **atr, size_t *capacity) {
 	(*capacity) *= 2;
 	*atr = (char*)realloc(*atr, *capacity * sizeof(char));
 	return;
 }
 
-void create_attribute(char **atr, size_t *capacity) {
+static void create_attribute(char **atr, size_t *capacity) {
 	*capacity = BUFSIZ;
 	*atr = (char*)malloc(*capacity * sizeof(char));
 	return;
 }
 
-table_err read_row(char **atr, FILE *file, size_t *capacity) {
+static table_err read_row(char **atr, FILE *file, size_t *capacity) {
 	ssize_t c;
 	size_t current_len = 0;
 	if (!atr || !*atr || !capacity) {
@@ -324,7 +324,7 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
 	return result;
 }
 
-size_t find_max_release(const KeySpace * const ks, const size_t count) {
+static size_t find_max_release(const KeySpace * const ks, const size_t count) {
 	size_t release = 0;
 	for (size_t i = 0; i < count; i++) {
 		if (release < ks[i].release) {

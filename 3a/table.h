@@ -31,6 +31,7 @@ typedef struct Table {
 
 Table *create_table(const size_t);
 void free_table(Table* const);
+
 table_err insert_key_to_table(Table* const, const char * const key, const char * const info);
 table_err delete_key_from_table(Table* const, const char* const);
 table_err print_table(const Table* const);
