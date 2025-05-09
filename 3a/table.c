@@ -51,6 +51,16 @@ static void free_ks(KeySpace * const ks) {
 	return;
 }
 
+static size_t find_max_release(const KeySpace * const ks, const size_t count) {
+	size_t release = 0;
+	for (size_t i = 0; i < count; i++) {
+		if (release < ks[i].release) {
+			release = ks[i].release;
+		}
+	}
+	return release;
+}
+
 static void rm_element_with_move(KeySpace * const current_ks, KeySpace * const last_ks) {
 	if (not_same_ks(current_ks, last_ks)) {
 		free_ks(current_ks);
@@ -69,21 +79,11 @@ void free_table(Table * const table) {
 	return;
 }
 
-static size_t find_last_release(const Table * const table, const char * const key) {
-	size_t release = 0;
-	for (size_t i = 0; i < table->csize; i++) {
-		if (cmp(table->ks[i].key, key) == 0) {
-			release++;
-		}
-	}
-	return release;
-}
-
 table_err insert_key_to_table(Table * const table, const char * const key, const char * const info) {
 	if (!table) return TABLE_NULL;
 	if (!key || !info) return TABLE_VAL;
 	if (table->csize >= table->msize) return TABLE_FULL;	
-	size_t release = find_last_release(table, key);
+	size_t release = find_max_release(table->ks, table->csize);
 	set_ks(table->ks + table->csize, key, info, release + 1);
 	table->csize++;
 	return TABLE_OK;
@@ -322,16 +322,6 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
 	set_ks(result->ks, ks->key, ks->info, ks->release);
 	result->csize++;
 	return result;
-}
-
-static size_t find_max_release(const KeySpace * const ks, const size_t count) {
-	size_t release = 0;
-	for (size_t i = 0; i < count; i++) {
-		if (release < ks[i].release) {
-			release = ks[i].release;
-		}
-	}
-	return release;
 }
 
 table_err clean_table(Table * const table) {
