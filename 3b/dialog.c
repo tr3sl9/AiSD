@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <readline/readline.h>
 #include "table.h"
 #include "dialog.h"
@@ -35,30 +36,6 @@ char* read_info() {
 	}
 	return info;
 }
-
-size_t read_number() {
-	int err = 0;
-	ssize_t number;
-	while(err != 1) {
-		printf("Enter number (from 1 to infinity): ");
-		err = scanf("%zd", &number);
-		if (err == 0) {
-			printf("Error: Value\nTry again\n");
-			scanf("%*[^\n]");
-		} 
-		else if (err == EOF) {
-			return TABLE_EOF;
-		}else {
-			if (number < 1) {
-				err = 0;
-				printf("The entered number must be greater than 0 and less than or equal to infinity!\n");
-				printf("Enter the number again\n");
-				scanf("%*[^\n]");
-			}
-		}
-	}
-	return number;
-}	
 
 table_err dialog_insert(Table * const table) {
 	if (table->csize >= table->msize) {
@@ -146,7 +123,8 @@ table_err dialog_find_release(Table * const table) {
 		return TABLE_EOF;
 	}
     
-    ssize_t release = read_number();
+	size_t release = 0;
+    table_err err = read_number(&release, 0, INT_MAX);
     if (release == EOF) {
         free(key);
         return TABLE_EOF;
