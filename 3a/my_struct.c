@@ -43,6 +43,20 @@ void da_print(const DynamicArray * const da, void(*print_item)(const void *)) {
     }
 }
 
+int da_delete_el(DynamicArray *da, size_t index) {
+	if (!da || index >= da->count) return 0;
+	
+	if (index < da->count - 1) {
+        void *dest = (char *)da->array + index * da->size_of_one;
+        void *src = (char *)dest + da->size_of_one;
+        size_t bytes_to_move = (da->count - index - 1) * da->size_of_one;
+        memmove(dest, src, bytes_to_move);
+    }
+    
+    da->count--;
+    return 1;
+}
+
 void da_free(DynamicArray * const da) {
     if (da) {
         free(da->array);
