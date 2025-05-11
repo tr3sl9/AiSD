@@ -2,7 +2,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <limits.h>
+
 #include "table.h"
+#include "my_struct.h"
+#include "info_struct.h"
 
 #define MAGIC_WORD "HASH_TABLE\n"
 
@@ -49,7 +52,7 @@ int cmp(const char * const str_1, const char * const str_2) {
 }
 
 void print_ks(const KeySpace * const ks, const char * const status, const size_t i) {
-	printf("| %-5zu | %-8s | %-30s | %-20zu | %-9zu |\n", i, status, ks->key, *(ks->info), ks->release);
+	printf("| %-5zu | %-8s | %-30s | %-20zu | %-9zu |\n", i, status, ks->key, ks->info->info, ks->release);
 	return;
 }
 
@@ -104,7 +107,7 @@ static void set_ks(KeySpace * const ks, const size_t busy, const char * const ke
 	ks->busy = busy;
 	ks->key = strdup(key);
 	if (release != 0) ks->release = release;
-	*(ks->info) = info;
+	ks->info->info = info;
 	return;
 }
 
@@ -157,7 +160,7 @@ KeySpace* search_by_key_with_release_in_table(const Table * const table, const c
 
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0 && table->ks[pos].release == release) {
-            set_ks(found_key_with_release, BUSY, key, *(table->ks[pos].info), release);
+            set_ks(found_key_with_release, BUSY, key, table->ks[pos].info->info, release);
 			return found_key_with_release;
         } 
 		else if (table->ks[pos].busy == EMPTY) {
@@ -199,7 +202,7 @@ KeySpace* search_by_key_in_table(const Table * const table, const char * const k
 	size_t capacity = 0;
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
-			 set_ks(result + capacity, BUSY, key, *(table->ks[pos].info), table->ks[pos].release);
+			 set_ks(result + capacity, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
         }
         else if (table->ks[pos].busy == EMPTY) {
             break;

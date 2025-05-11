@@ -23,7 +23,7 @@ int main(int argc, char **argv){
 	while (end_program != 1){
 		show_menu();
 		size_t choice;
-		if(check_error(&choice, 0, 9) == TABLE_EOF) {
+		if(read_number(&choice, 0, 9) == TABLE_EOF) {
 			free_table(table);
 			return 1;
 		}

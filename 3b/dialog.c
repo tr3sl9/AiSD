@@ -102,7 +102,7 @@ table_err dialog_find(Table * const table) {
     printf("│ Release   │ Info                 │\n");
     printf("├───────────┼──────────────────────┤\n");
     for (size_t i = 0; i < count_key; i++) {
-        printf("│ %-9zu │ %-20zu │\n", elements[i].release, *(elements[i].info));
+        printf("│ %-9zu │ %-20zu │\n", elements[i].release, elements[i].info->info);
         if (i < count_key - 1) {
             printf("├───────────┼──────────────────────┤\n");
         }
@@ -141,7 +141,7 @@ table_err dialog_find_release(Table * const table) {
     printf("┌──────────────────────┐\n");
     printf("│ Info                 │\n");
     printf("├──────────────────────┤\n");
-    printf("│ %-20zu │\n", *(element->info));
+    printf("│ %-20zu │\n", element->info->info);
     printf("└──────────────────────┘\n");
     
     free(key);

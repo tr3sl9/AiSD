@@ -1,7 +1,11 @@
 #ifndef TABLE_H
 #define TABLE_H
+
 #include <stdio.h>
 #include <stdint.h>
+
+#include "my_struct.h"
+#include "info_struct.h"
 
 typedef enum table_err {
     TABLE_OK = 0,
@@ -27,7 +31,7 @@ typedef struct KeySpace {
     BusyType busy;
     char* key;
     size_t release;
-    size_t* info;
+    Info* info;
 } KeySpace;
 
 typedef struct Table {
