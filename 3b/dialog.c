@@ -5,6 +5,7 @@
 #include <readline/readline.h>
 #include "table.h"
 #include "dialog.h"
+#include "testing.h"
 
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
@@ -49,8 +50,8 @@ table_err dialog_insert(Table * const table) {
 		return TABLE_EOF;
 	}
 
-	ssize_t info = read_number();
-	if (info == TABLE_EOF) {
+	size_t info = 0;
+	if (read_number(&info, INT_MIN, INT_MAX) == TABLE_EOF) {
 		free(key);
 		return TABLE_EOF;
 	}
@@ -125,8 +126,7 @@ table_err dialog_find_release(Table * const table) {
 	}
     
 	size_t release = 0;
-    table_err err = read_number(&release, 0, INT_MAX);
-    if (release == EOF) {
+    if (read_number(&release, 0, INT_MAX) == TABLE_EOF) {
         free(key);
         return TABLE_EOF;
     }

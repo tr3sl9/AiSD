@@ -5,7 +5,7 @@
 table_err read_number(size_t * const count, const size_t min, const size_t max){
 	int p2 = 0;
 	while(p2 != 1){
-		printf("Choice: ");
+		printf("Choice(operation number or release/info depending on the operation):");
 		p2 = scanf("%zu", count);
 		if(p2 == 0){
 			printf("Error: invalid data type\n");
