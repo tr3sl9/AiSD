@@ -52,12 +52,14 @@ static void free_ks(KeySpace * const ks) {
 	return;
 }
 
-static size_t find_max_release(const KeySpace * const ks, const size_t count) {
+static size_t find_max_release(const Table * const table, const char * const key) {
 	size_t release = 0;
-	for (size_t i = 0; i < count; i++) {
-		if (release < ks[i].release) {
-			release = ks[i].release;
-		}
+	for (size_t i = 0; i < table->csize; i++) {
+		if (cmp(table->ks[i].key, key) == 0) {
+			if (table->ks[i].release > release) {
+				release = table->ks[i].release;
+			}
+		} 
 	}
 	return release;
 }
@@ -84,7 +86,7 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
 	if (!table) return TABLE_NULL;
 	if (!key || !info) return TABLE_VAL;
 	if (table->csize >= table->msize) return TABLE_FULL;	
-	size_t release = find_max_release(table->ks, table->csize);
+	size_t release = find_max_release(table, key);
 	set_ks(table->ks + table->csize, key, info, release + 1);
 	table->csize++;
 	return TABLE_OK;
@@ -312,31 +314,39 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
 	return result;
 }
 
+static size_t find_max_release_in_da(const DynamicArray * const da) {
+    size_t max_release = 0;
+    for (size_t i = 0; i < da->count; i++) {
+        KeySpace *ks = *(KeySpace **)((char *)da->array + i * da->size_of_one);
+        if (ks->release > max_release) {
+            max_release = ks->release;
+        }
+    }
+    return max_release;
+}
+
+static void delete_element_with_non_max_releases(Table * const table, DynamicArray * const  da, const size_t max_release) {
+	for (size_t j = 0; j < da->count; j++) {
+		KeySpace *ks = *(KeySpace **)((char *)da->array + j * da->size_of_one);
+		if (ks->release < max_release) {
+			rm_element_with_move(ks, table->ks + table->csize - 1);
+			if (table->csize > 0) table->csize--;
+		}
+	}
+
+	return; 
+}
+
 table_err clean_table(Table * const table) {
     if (!table) return TABLE_NULL;
-    
+    if (table->csize == 0) return TABLE_OK;
+
     for (size_t i = 0; i < table->csize; i++) {
         DynamicArray *da = find_elements(table, table->ks[i].key);
-        if (!da) continue;
-        
-        size_t max_release = 0;
-        for (size_t j = 0; j < da->count; j++) {
-            KeySpace *ks = *(KeySpace **)((char *)da->array + j * da->size_of_one);
-            if (ks->release > max_release) {
-                max_release = ks->release;
-            }
-        }
-        
-        for (size_t j = da->count; j > 0; j--) {
-            KeySpace *ks = *(KeySpace **)((char *)da->array + (j - 1) * da->size_of_one);
-            if (ks->release < max_release) {
-                rm_element_with_move(ks, table->ks + table->csize - 1);
-                if (table->csize != 0) table->csize--;
-                i--;
-            }
-        }
-        
+        size_t max_release = find_max_release_in_da(da);
+		delete_element_with_non_max_releases(table, da, max_release); 
         da_free(da);
     }
+
     return TABLE_OK;
 }
