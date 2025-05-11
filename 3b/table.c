@@ -52,6 +52,10 @@ int cmp(const char * const str_1, const char * const str_2) {
 }
 
 void print_ks(const KeySpace * const ks, const char * const status, const size_t i) {
+	if(!ks || !ks->info) {
+        printf("| %-5zu | %-8s | %-30s | %-20s | %-9s |\n", i, status, ks ? ks->key : "NULL", "NULL", "NULL");
+		return;
+	}
 	printf("| %-5zu | %-8s | %-30s | %-20zu | %-9zu |\n", i, status, ks->key, ks->info->info, ks->release);
 	return;
 }
@@ -59,65 +63,104 @@ void print_ks(const KeySpace * const ks, const char * const status, const size_t
 Table *create_table(const size_t msize) {
     Table *table = (Table*)calloc(1, sizeof(Table));
     if (!table) return NULL;
+
     table->ks = (KeySpace*)calloc(msize, sizeof(KeySpace));
     if (!table->ks) {
         free(table);
         return NULL;
     }
+
     table->msize = msize;
     table->csize = 0;
     for (size_t i = 0; i < msize; i++) {
         table->ks[i].busy = EMPTY;
+		table->ks[i].key = NULL;
+		table->ks[i].release = 0;
+		table->ks[i].info = info_create();
     }
     return table;
 }
 
 void free_table(Table * const table) {
-    if (!table) return;    
+    if (!table) return;
+
     for (size_t i = 0; i < table->msize; i++) {
-        if (table->ks[i].busy == BUSY) {
-            free_ks(table->ks + i);        }
+        free_ks(table->ks + i); 
+		info_free(table->ks[i].info);
     }
+
     free(table->ks);
     free(table);
 }
 
 void free_ks(KeySpace * const ks) {
-	if (!ks) {
-		return;
-	}
 	ks->busy = DELETED;
 	free(ks->key);
-	free(ks->info);
+	ks->key = NULL;
 	return;
 }
 
-static size_t find_last_release(const Table * const table, const char * const key) {
-	size_t release = 0;
-	for (size_t i = 0; i < table->csize; i++) {
-		if (cmp(table->ks[i].key, key) == 0) {
-			release++;
-		}
-	}
-	return release;
+static size_t find_max_release(const Table * const table, const char * const key) {
+    size_t release = 0;
+    size_t h1 = hash1(key, table->msize);
+    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t pos = h1;
+    
+    for (size_t i = 0; i < table->msize; i++) {
+        if (table->ks[pos].busy == BUSY && strcmp(table->ks[pos].key, key) == 0) {
+            if (table->ks[pos].release > release) {
+                release = table->ks[pos].release;
+            }
+        }
+        pos = (pos + h2) % table->msize;
+    }
+    return release;
 }
 
 static void set_ks(KeySpace * const ks, const size_t busy, const char * const key, const size_t info, const size_t release) {
 	if (!ks || !key || !info) return;
+
 	ks->busy = busy;
 	ks->key = strdup(key);
 	if (release != 0) ks->release = release;
-	ks->info->info = info;
+	info_insert(ks->info, info);
+
 	return;
+}
+
+DynamicArray* find_elements(const Table * const table, const char * const key) {
+    DynamicArray *da = da_create(sizeof(KeySpace*));
+    if (!da) return NULL;
+    
+    size_t h1 = hash1(key, table->msize);
+    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t pos = h1;
+    
+    for (size_t i = 0; i < table->msize; i++) {
+        if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
+            if (!da_append(da, &(table->ks[pos]))) {
+                da_free(da);
+                return NULL;
+            }
+        }
+        else if (table->ks[pos].busy == EMPTY) {
+            break;
+        }
+        pos = (pos + h2) % table->msize;
+    }
+    
+    return da;
 }
 
 table_err insert_key_to_table(Table * const table, const char * const key, const size_t info) {
     if (!table || !key) return TABLE_NULL;
     if (table->csize >= table->msize) return TABLE_FULL;
+
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
     size_t pos = h1;
-    size_t release = find_last_release(table, key) + 1;
+
+    size_t release = find_max_release(table, key) + 1;
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy != BUSY) {
 			set_ks(table->ks + pos, BUSY, key, info, release);
@@ -126,26 +169,32 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
         }
         pos = (pos + h2) % table->msize;
     }
+
     return TABLE_FULL;
 }
 
 table_err delete_key_from_table(Table * const table, const char * const key) {
     if (!table) return TABLE_NULL;
-	if (!key) return TABLE_VAL;
+    if (!key) return TABLE_VAL;
+    if (table->csize == 0) return TABLE_EMPTY;
+
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
     size_t pos = h1;
     size_t found = 0;
+
     for (size_t i = 0; i < table->msize; i++) {
-		if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
-			free_ks(table->ks + pos);
-			table->csize--;
-			found = 1;
-		} else if (table->ks[pos].busy == EMPTY) {
-			break;
-		}
+        if (table->ks[pos].busy == BUSY && strcmp(table->ks[pos].key, key) == 0) {
+			table->ks[pos].busy = DELETED;
+            table->csize--;
+            found = 1;
+        }
+        else if (table->ks[pos].busy == EMPTY) {
+            break;
+        }
         pos = (pos + h2) % table->msize;
     }
+
     return found ? TABLE_OK : TABLE_VAL;
 }
 
@@ -172,44 +221,31 @@ KeySpace* search_by_key_with_release_in_table(const Table * const table, const c
     return NULL;
 }
 
-static size_t count_key_in_table(const Table * const table, const char * const key, size_t h1, size_t h2) {
-	size_t count = 0;
-	size_t pos = h1;
-
-	for (size_t i = 0; i < table->msize; i++) {
-		if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
-			count++;
-		}
-		else if (table->ks[pos].busy == EMPTY) {
-			break;
-		}
-		pos = (pos + h2) % table->msize;
-	}
-
-	return count;
-}
-
-KeySpace* search_by_key_in_table(const Table * const table, const char * const key, size_t * const count_key) {
+KeySpace** search_by_key_in_table(const Table * const table, const char * const key, size_t * const count_key) {
     if (!table || !key) return NULL;
 
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+	size_t pos = h1;
 
-    *count_key = count_key_in_table(table, key, h1, h2);
-    KeySpace* result = (KeySpace*)calloc(*count_key, sizeof(KeySpace));
+    DynamicArray *da = da_create(sizeof(KeySpace*));
+    if (!da) return NULL;
 
-    size_t pos = h1;
-	size_t capacity = 0;
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
-			 set_ks(result + capacity, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
+			KeySpace *copy = (KeySpace*)malloc(sizeof(KeySpace));
+			set_ks(copy, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
+			da_append(da, &copy);
         }
         else if (table->ks[pos].busy == EMPTY) {
-            break;
+			break;
         }
         pos = (pos + h2) % table->msize;
     }
-
+	
+	*count_key = da->count;
+	KeySpace **result = (KeySpace**)da->array;
+	free(da);
     return result;
 }
 

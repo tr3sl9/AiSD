@@ -3,8 +3,9 @@
 #include <string.h>
 #include "info_struct.h"
 
-Info *info_create() {
-	Info *info = (Info*)malloc(sizeof(size_t));
+Info *info_create(void) {
+	Info *info = (Info*)calloc(1, sizeof(size_t));
+	info->info = 0;
 	return info;
 } 
 

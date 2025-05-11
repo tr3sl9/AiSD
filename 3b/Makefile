@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall -Wextra -Werror -lreadline -Wno-implicit-fallthrough
+CFLAGS=-g -Wall -Wextra -Wpedantic -Werror -lreadline -Wno-implicit-fallthrough
 CC=gcc
 OBJ=obj
 LIB_DIR=lib
