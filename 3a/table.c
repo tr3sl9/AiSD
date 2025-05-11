@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "table.h"
+#include "my_struct.h"
 
 #define MAGIC_WORD "TABLE\n"
 
@@ -89,22 +90,21 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
 	return TABLE_OK;
 }
 
-static KeySpace **find_elements(const Table * const table, const char * const key, size_t * const count) {
+static DynamicArray *find_elements(const Table * const table, const char * const key) {
+	DynamicArray *da = da_create(sizeof(KeySpace*));
+	if (!da) return NULL;
+
 	for (size_t i = 0; i < table->csize; i++) {
-		if (cmp(table->ks[i].key, key) == 0) {
-			(*count)++;
-		}
-	}
-	KeySpace **key_space_for_res_table = (KeySpace**)calloc(*count, sizeof(KeySpace*));
-	if (!key_space_for_res_table) return NULL;
-	size_t idx = 0;
-	for (size_t i = 0; i < table->csize; i++) {
-		if (cmp(table->ks[i].key, key) == 0) {
-			key_space_for_res_table[idx] = table->ks + i;
-			idx++;
-		}
-	}
-	return key_space_for_res_table;
+        if (cmp(table->ks[i].key, key) == 0) {
+            KeySpace *ptr = table->ks + i;
+            if (!da_append(da, &ptr)) {
+                da_free(da);
+                return NULL;
+            }
+        }
+    }
+
+	return da;
 }
 
 static KeySpace *find_element_with_release(const Table * const table, const char * const key, const size_t release) {
@@ -123,35 +123,21 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 	if (!key) {
 		return TABLE_VAL;
 	}
-	size_t count = 0;
-	KeySpace **ks = find_elements(table, key, &count);
-	if (!count) {
-		free(ks);
-		return TABLE_VAL;
-	}
-	for (size_t i = count; i > 0; i--) {
-		rm_element_with_move(ks[i - 1], table->ks + table->csize - 1);
-		if (table->csize != 0) table->csize--; 
-	}
-	free(ks);
-	return TABLE_OK;
-}
 
-table_err delete_element_with_release(Table * const table, const char * const key, const size_t release) {
-	if (!table) {
-		return TABLE_NULL;
-	}
-	if (!key) {
+	DynamicArray *da = find_elements(table, key);
+	if (!da) return TABLE_MEM;
+
+	if (da->count == 0) {
+		da_free(da);
 		return TABLE_VAL;
 	}
-	KeySpace *ks = find_element_with_release(table, key, release);
-	if (!ks) {
-		return TABLE_VAL;
+	for (size_t i = da->count; i > 0; i--) {
+		KeySpace **ks_ptr = (KeySpace **)((char *)da->array + (i - 1) * da->size_of_one);
+        rm_element_with_move(*ks_ptr, table->ks + table->csize - 1);
+        if (table->csize != 0) table->csize--;	
 	}
-	if (table->csize > 0) {
-		rm_element_with_move(ks, table->ks + table->csize - 1);
-		table->csize--;
-	}
+
+	da_free(da);
 	return TABLE_OK;
 }
 
@@ -290,22 +276,24 @@ Table* search_by_key_in_table(const Table * const table, const char * const key)
 	if (!table || !key) {
 		return NULL;
 	}
-	size_t count = 0;
-	KeySpace **ks = find_elements(table, key, &count);
-	if (!ks) {
-		return NULL;
-	} 
-	Table *result = create_table(count);
-	if (!result) {
-		return NULL;
-	}
-	for (size_t i = 0; i < result->msize; i++) {
-		set_ks(result->ks + result->csize, ks[i]->key, ks[i]->info, ks[i]->release);
-		result->csize++;
-	}
-	free(ks);
-	return result;
-}
+
+	DynamicArray *da = find_elements(table, key);
+    if (!da) return NULL;
+    
+    Table *result = create_table(da->count);
+    if (!result) {
+        da_free(da);
+        return NULL;
+    }
+    
+    for (size_t i = 0; i < da->count; i++) {
+        KeySpace *ks = *(KeySpace **)((char *)da->array + i * da->size_of_one);
+        set_ks(result->ks + result->csize, ks->key, ks->info, ks->release);
+        result->csize++;
+    }
+    
+    da_free(da);
+    return result;}
 
 Table* search_by_key_with_release_in_table(const Table * const table, const char * const key, const size_t release) {
 	if (!table || !key) {
@@ -325,20 +313,30 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
 }
 
 table_err clean_table(Table * const table) {
-	if (!table) return TABLE_NULL;
-	table_err err = TABLE_OK;
-	for (size_t i = 0; i < table->csize; i++) {
-		size_t count = 0;
-		KeySpace **ks = find_elements(table, table->ks[i].key, &count);
-		size_t release = find_max_release(*ks, count);
-		for (size_t j = count; j > 0; j--) {
-			if (release > ks[j - 1]->release) {
-				rm_element_with_move(ks[j - 1], table->ks + table->csize - 1);
-				if (table->csize != 0) table->csize--;
-				i--;
-			}
-		}
-		free(ks);
-	}
-	return err;
+    if (!table) return TABLE_NULL;
+    
+    for (size_t i = 0; i < table->csize; i++) {
+        DynamicArray *da = find_elements(table, table->ks[i].key);
+        if (!da) continue;
+        
+        size_t max_release = 0;
+        for (size_t j = 0; j < da->count; j++) {
+            KeySpace *ks = *(KeySpace **)((char *)da->array + j * da->size_of_one);
+            if (ks->release > max_release) {
+                max_release = ks->release;
+            }
+        }
+        
+        for (size_t j = da->count; j > 0; j--) {
+            KeySpace *ks = *(KeySpace **)((char *)da->array + (j - 1) * da->size_of_one);
+            if (ks->release < max_release) {
+                rm_element_with_move(ks, table->ks + table->csize - 1);
+                if (table->csize != 0) table->csize--;
+                i--;
+            }
+        }
+        
+        da_free(da);
+    }
+    return TABLE_OK;
 }
