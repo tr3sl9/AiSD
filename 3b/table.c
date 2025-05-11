@@ -300,92 +300,114 @@ table_err print_table(const Table * const table) {
 }
 
 table_err import_table_from_file(Table * const table, const char * const filename) {
-	if (!table) return TABLE_NULL;
-	if (!filename) return FILE_ERR;
-	FILE *file = fopen(filename, "rb");
-	if (!file) return FILE_ERR;
+    if (!table) return TABLE_NULL;
+    if (!filename) return FILE_ERR;
+    
+    FILE *file = fopen(filename, "rb");
+    if (!file) return FILE_ERR;
 
-	char magic_word[sizeof(MAGIC_WORD)] = {0};
-	fread(magic_word, sizeof(char), sizeof(magic_word), file);
-	if (cmp(magic_word, MAGIC_WORD) != 0) {
-		fclose(file);
-		return TABLE_MAGIC_WORD;
-	}
+    char magic_word[sizeof(MAGIC_WORD)] = {0};
+    if (fread(magic_word, sizeof(char), sizeof(MAGIC_WORD) - 1, file) != sizeof(MAGIC_WORD) - 1 || cmp(magic_word, MAGIC_WORD) != 0) {
+        fclose(file);
+        return TABLE_MAGIC_WORD;
+    }
 
-	size_t msize, csize;
+    size_t msize, csize;
     if (fread(&msize, sizeof(size_t), 1, file) != 1 || fread(&csize, sizeof(size_t), 1, file) != 1) {
         fclose(file);
         return TABLE_SIZE;
     }
-    if (msize != table->msize || csize > msize || msize == 0) {
+
+    if (msize != table->msize || csize > msize) {
         fclose(file);
         return TABLE_SIZE;
     }
-	for (size_t i = 0; i < csize; i++) {
-		size_t key_len, release;
-		if (fread(&key_len, sizeof(size_t), 1, file) != 1) {
-			fclose(file);
-			return TABLE_VAL;
-		}	
-		char *key = (char*)malloc(key_len + 1);
-		if (!key) {
-			fclose(file);
-			return TABLE_MEM;
-		}
-		if (fread(key, sizeof(char), key_len, file) != key_len) {
-			free(key);
-			fclose(file);
-			return TABLE_VAL;
-		}
-		key[key_len] = '\0';
-		if (fread(&release, sizeof(size_t), 1, file) != 1) {
-			free(key);
-			fclose(file);
-			return TABLE_VAL;
-		}
-		size_t info;
-		if (fread(&info, sizeof(size_t), 1, file) != 1) {
-			free(key);
-			fclose(file);
-			return TABLE_VAL;
-		}
-		table_err err = insert_key_to_table(table, key, info);
-		if (err != TABLE_OK) {
-			free(key);
-			fclose(file);
-			return err;
-		}
-		free(key);
-		table->csize++;
-	}
-	fclose(file);
-	return TABLE_OK;
+
+    for (size_t i = 0; i < csize; i++) {
+        size_t busy, key_len, release;
+        size_t info;
+
+        if (fread(&busy, sizeof(size_t), 1, file) != 1 || fread(&key_len, sizeof(size_t), 1, file) != 1) {
+            fclose(file);
+            return TABLE_VAL;
+        }
+
+        char *key = (char*)malloc(key_len + 1);
+        if (!key) {
+            fclose(file);
+            return TABLE_MEM;
+        }
+        
+        if (fread(key, sizeof(char), key_len, file) != key_len) {
+            free(key);
+            fclose(file);
+            return TABLE_VAL;
+        }
+        key[key_len] = '\0';
+
+        if (fread(&release, sizeof(size_t), 1, file) != 1 || fread(&info, sizeof(size_t), 1, file) != 1) {
+            free(key);
+            fclose(file);
+            return TABLE_VAL;
+        }
+
+        if (busy == BUSY) {
+            table_err err = insert_key_to_table(table, key, info);
+            if (err != TABLE_OK) {
+                free(key);
+                fclose(file);
+                return err;
+            }
+        }
+        free(key);
+    }
+
+    fclose(file);
+    return TABLE_OK;
 }
 
 table_err export_table_to_file(const Table * const table, const char * const filename) {
-    if (!table || !filename) return TABLE_NULL;
+    if (!table) return TABLE_NULL;
+	if (!filename) return FILE_ERR;
+    
     FILE* file = fopen(filename, "wb");
     if (!file) return FILE_ERR;
-    
+
     if (fwrite(MAGIC_WORD, sizeof(char), sizeof(MAGIC_WORD) - 1, file) != sizeof(MAGIC_WORD) - 1) {
         fclose(file);
         return FILE_ERR;
     }
-    if (fwrite(&table->msize, sizeof(size_t), 1, file) != 1 ||
-        fwrite(&table->csize, sizeof(size_t), 1, file) != 1) {
+
+    if (fwrite(&table->msize, sizeof(size_t), 1, file) != 1 ||fwrite(&table->csize, sizeof(size_t), 1, file) != 1) {
         fclose(file);
         return FILE_ERR;
     }
+
     for (size_t i = 0; i < table->msize; i++) {
+        size_t busy = table->ks[i].busy;
+        if (fwrite(&busy, sizeof(size_t), 1, file) != 1) {
+            fclose(file);
+            return FILE_ERR;
+        }
+
         if (table->ks[i].busy == BUSY) {
             size_t key_len = strlen(table->ks[i].key);
-// write all information to file 			
-            if (fwrite(&key_len, sizeof(size_t), 1, file) != 1 || fwrite(table->ks[i].key, sizeof(char), key_len, file) != key_len || fwrite(&table->ks[i].release, sizeof(size_t), 1, file) != 1 || fwrite(table->ks[i].info, sizeof(uint32_t), 1, file) != 1) {
+            size_t release = table->ks[i].release;
+            size_t info = table->ks[i].info->info;
+
+            if (fwrite(&key_len, sizeof(size_t), 1, file) != 1 || fwrite(table->ks[i].key, sizeof(char), key_len, file) != key_len || fwrite(&release, sizeof(size_t), 1, file) != 1 || fwrite(&info, sizeof(size_t), 1, file) != 1) {
+                fclose(file);
+                return FILE_ERR;
+            }
+        } else {
+            size_t zero = 0;
+            if (fwrite(&zero, sizeof(size_t), 1, file) != 1 || fwrite(&zero, sizeof(size_t), 1, file) != 1 || fwrite(&zero, sizeof(size_t), 1, file) != 1) {
                 fclose(file);
                 return FILE_ERR;
             }
         }
     }
+
     fclose(file);
     return TABLE_OK;
 }
