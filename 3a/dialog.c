@@ -9,7 +9,7 @@
 
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
-#define COUNT_OP sizeof(operation) / sizeof(functions) + 1
+#define COUNT_OP sizeof(operations) / sizeof(operation)
 
 static char* read_key() {
 	char* key = NULL;
@@ -142,37 +142,30 @@ static table_err dialog_export(Table * const table) {
 	return err;
 }
 
-const functions operation[] = {
-	dialog_insert,
-	dialog_delete,
-	dialog_find,
-	dialog_find_release,
-	dialog_print,
-	dialog_import,
-	dialog_export,
-	dialog_clean,
-};
+static table_err dialog_exit([[__maybe_unused__]]Table * const table) {
+	return TABLE_EXIT;
+}
 
-const char *menu_items[COUNT_OP] = {
-	"Insert element",
-	"Delete by key",
-	"Search by key",
-	"Search by key and version",
-	"Print table",
-	"Import from file",
-	"Export to file",
-	"Clean table",
-	"EXIT"
+const operation operations[] = {
+	{dialog_insert, "Insert element"},
+	{dialog_delete, "Delete by key"},
+	{dialog_find, "Search by key"},
+	{dialog_find_release, "Search by key and version"},
+	{dialog_print, "Print table"},
+	{dialog_import, "Import table from file"},
+	{dialog_export, "Export table to file"},
+	{dialog_clean, "Clean table"},
+	{dialog_exit, "EXIT"}
 };
 
 void show_menu() {
 	for (size_t i = 0; i < COUNT_OP; i++) {
-		printf("[%zu]: %s\n", i + 1, menu_items[i]);
+		printf("[%zu]: %s\n", i + 1, operations[i].msg);
 	}
 	return;
 }
 
-static void choice_mess_from_table_err(const table_err err) {
+static void choice_msg_from_table_err(const table_err err) {
 	switch (err) {
         case TABLE_OK: printf("ALL'S OKAY\n"); break;
 		case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
@@ -196,12 +189,8 @@ int process_choice(Table *table, size_t choice) {
 		return 0;
 	}
 	table_err err = TABLE_OK;
-	if (choice == COUNT_OP) {
-		err = TABLE_EXIT;
-	} else {
-		err = operation[choice - 1](table);
-	}
-	choice_mess_from_table_err(err);
+	err = operations[choice - 1].func(table);
+	choice_msg_from_table_err(err);
 	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
 	return 0;
 }
