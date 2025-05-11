@@ -16,11 +16,8 @@ static char* read_key() {
 	while (!key) {
 		key = readline(PROMPT_FOR_KEY);
 		if (key == NULL) {
-			free(key);
 			return NULL;
-		} else {
-			break;
-		}
+		} 
 	}
 	return key;
 }
@@ -30,11 +27,8 @@ static char* read_info() {
 	while (!info) {
 		info = readline(PROMPT_FOR_INFO);
 		if (info == NULL) {
-			free(info);
 			return NULL;
-		} else {
-			break;
-		}
+		} 
 	}
 	return info;
 }
