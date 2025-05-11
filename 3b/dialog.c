@@ -9,18 +9,15 @@
 
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
-#define COUNT_OP sizeof(operation) / sizeof(functions) + 1
+#define COUNT_OP sizeof(operation) / sizeof(functions)
 
 char* read_key() {
 	char* key = NULL;
 	while (!key) {
 		key = readline(PROMPT_FOR_KEY);
 		if (key == NULL) {
-			free(key);
 			return NULL;
-		} else {
-			break;
-		}
+		} 
 	}
 	return key;
 }
@@ -30,11 +27,8 @@ char* read_info() {
 	while (!info) {
 		info = readline(PROMPT_FOR_INFO);
 		if (info == NULL) {
-			free(info);
 			return NULL;
-		} else {
-			break;
-		}
+		} 
 	}
 	return info;
 }
@@ -176,37 +170,31 @@ table_err dialog_export(Table * const table) {
     return err;
 }
 
-const functions operation[] = {
-    dialog_insert,
-    dialog_delete,
-    dialog_find,
-    dialog_find_release,
-    dialog_print,
-    dialog_import,
-    dialog_export
-};
+static table_err dialog_exit([[__maybe_unused__]]Table * const table) {
+	return TABLE_EXIT;
+}
 
-const char *menu_items[] = {
-    "Insert element",
-    "Delete by key",
-    "Search by key",
-    "Search by key and release",
-    "Print table",
-    "Import from file",
-    "Export to file",
-    "Exit"
+const operation operations[] = {
+	{dialog_insert, "Insert element"},
+	{dialog_delete, "Delete by key"},
+	{dialog_find, "Search by key"},
+	{dialog_find_release, "Search by key and version"},
+	{dialog_print, "Print table"},
+	{dialog_import, "Import table from file"},
+	{dialog_export, "Export table to file"},
+	{dialog_exit, "EXIT"}
 };
 
 void show_menu() {
     printf("\nMenu:\n");
     for (size_t i = 0; i < COUNT_OP; i++) {
-        printf("[%zu]: %s\n", i + 1, menu_items[i]);
+        printf("[%zu]: %s\n", i + 1, operations[i].msg);
     }
     printf("\n");
 	return;
 }
 
-void function(const table_err err) {
+static void choice_msg_from_table_err(const table_err err) {
     switch (err) {
         case TABLE_OK: printf("Operation completed successfully\n"); break;
         case TABLE_EMPTY: printf("Error: Table is empty\n"); break;
@@ -229,14 +217,9 @@ int process_choice(Table *table, size_t choice) {
 		return 0;
 	}
 
-	table_err err = TABLE_OK;
-	if (choice == COUNT_OP) {
-		err = TABLE_EXIT;
-	} else {
-		err = operation[choice - 1](table);
-	}
+	table_err err = operations[choice - 1].func(table);
+	choice_msg_from_table_err(err);
 
-	function(err);
 	if (err == TABLE_EOF || err == TABLE_EXIT) return 1;
 	return 0;
 }
