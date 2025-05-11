@@ -29,16 +29,16 @@ typedef struct Table {
 	size_t csize;
 } Table;
 
-Table *create_table(const size_t);
-void free_table(Table* const);
+Table *create_table(const size_t msize);
+void free_table(Table * const);
 
-table_err insert_key_to_table(Table* const, const char * const key, const char * const info);
-table_err delete_key_from_table(Table* const, const char* const);
-table_err print_table(const Table* const);
-table_err import_table_from_file(Table* const, const char* const);
-table_err export_table_to_file(const Table* const, const char* const);
-Table* search_by_key_in_table(const Table* const, const char* const);
-Table* search_by_key_with_release_in_table(const Table* const, const char* const, const size_t);
-table_err clean_table(Table* const);
+table_err insert_key_to_table(Table * const, const char * const key, const char * const info);
+table_err delete_key_from_table(Table * const, const char * const key);
+table_err print_table(const Table * const);
+table_err import_table_from_file(Table * const, const char * const filename);
+table_err export_table_to_file(const Table * const, const char * const filename);
+Table* search_by_key_in_table(const Table * const, const char * const key);
+Table* search_by_key_with_release_in_table(const Table * const, const char * const key, const size_t release);
+table_err clean_table(Table * const);
 
 #endif
