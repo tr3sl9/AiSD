@@ -2,7 +2,7 @@
 #include "testing.h"
 #include "table.h"
 
-table_err check_error(size_t * const count, const size_t min, const size_t max){
+table_err read_number(size_t * const count, const size_t min, const size_t max){
 	int p2 = 0;
 	while(p2 != 1){
 		printf("Choice: ");
