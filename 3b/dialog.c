@@ -100,7 +100,9 @@ table_err dialog_find(Table * const table) {
         if (i < count_key - 1) {
             printf("├───────────┼──────────────────────┤\n");
         }
+		info_free(elements[i]->info);
 		free_ks(elements[i]);
+		free(elements[i]);
     }
     printf("└───────────┴──────────────────────┘\n");
     
@@ -139,7 +141,9 @@ table_err dialog_find_release(Table * const table) {
     printf("│ %-20zu │\n", element->info->info);
     printf("└──────────────────────┘\n");
     
+	info_free(element->info);
     free_ks(element);
+	free(element);
 	free(key);
     return TABLE_OK;
 }
@@ -172,7 +176,7 @@ table_err dialog_export(Table * const table) {
     return err;
 }
 
-static table_err dialog_exit([[__maybe_unused__]]Table * const table) {
+static table_err dialog_exit(__attribute__((__unused__))Table * const table) {
 	return TABLE_EXIT;
 }
 

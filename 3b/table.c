@@ -52,10 +52,6 @@ int cmp(const char * const str_1, const char * const str_2) {
 }
 
 void print_ks(const KeySpace * const ks, const char * const status, const size_t i) {
-	if(!ks || !ks->info) {
-        printf("| %-5zu | %-8s | %-30s | %-20s | %-9s |\n", i, status, ks ? ks->key : "NULL", "NULL", "NULL");
-		return;
-	}
 	printf("| %-5zu | %-8s | %-30s | %-20zu | %-9zu |\n", i, status, ks->key, ks->info->info, ks->release);
 	return;
 }
@@ -200,53 +196,84 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 
 KeySpace* search_by_key_with_release_in_table(const Table * const table, const char * const key, const size_t release) {
     if (!table || !key) return NULL;
-
+    
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
     size_t pos = h1;
-
-	KeySpace *found_key_with_release = (KeySpace*)calloc(1, sizeof(KeySpace));
-
+    
     for (size_t i = 0; i < table->msize; i++) {
-        if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0 && table->ks[pos].release == release) {
-            set_ks(found_key_with_release, BUSY, key, table->ks[pos].info->info, release);
-			return found_key_with_release;
-        } 
-		else if (table->ks[pos].busy == EMPTY) {
+        if (table->ks[pos].busy == BUSY && strcmp(table->ks[pos].key, key) == 0 && table->ks[pos].release == release) {
+            
+            KeySpace *copy = (KeySpace*)malloc(sizeof(KeySpace));
+			copy->info = info_create();
+            if (!copy) return NULL;
+            set_ks(copy, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
+            
+            if (!copy->key || !copy->info) {
+                free(copy->key);
+                free(copy->info);
+                free(copy);
+                return NULL;
+            }
+            
+            return copy;
+        }
+        else if (table->ks[pos].busy == EMPTY) {
             break;
         }
         pos = (pos + h2) % table->msize;
     }
-
     return NULL;
 }
 
-KeySpace** search_by_key_in_table(const Table * const table, const char * const key, size_t * const count_key) {
-    if (!table || !key) return NULL;
-
+KeySpace** search_by_key_in_table(const Table * const table, const char * const key, size_t *count) {
+    if (!table || !key || !count) return NULL;
+    
+    DynamicArray *da = da_create(sizeof(KeySpace**));
+    if (!da) return NULL;
+    
     size_t h1 = hash1(key, table->msize);
     size_t h2 = hash2(key, strlen(key), 0x9747b28c);
-	size_t pos = h1;
-
-    DynamicArray *da = da_create(sizeof(KeySpace*));
-    if (!da) return NULL;
-
+    size_t pos = h1;
+    
     for (size_t i = 0; i < table->msize; i++) {
-        if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
-			KeySpace *copy = (KeySpace*)malloc(sizeof(KeySpace));
-			set_ks(copy, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
-			da_append(da, &copy);
+        if (table->ks[pos].busy == BUSY && strcmp(table->ks[pos].key, key) == 0) {
+            KeySpace *copy = (KeySpace*)malloc(sizeof(KeySpace));
+            if (!copy) {
+                da_free(da);
+                return NULL;
+            }
+            copy->busy = BUSY;
+            copy->key = strdup(table->ks[pos].key);
+            copy->release = table->ks[pos].release;
+            copy->info = (Info*)malloc(sizeof(Info));
+            if (!copy->info || !copy->key) {
+                free(copy->key);
+                free(copy->info);
+                free(copy);
+                da_free(da);
+                return NULL;
+            }
+            copy->info->info = table->ks[pos].info->info;
+            
+            if (!da_append(da, &copy)) {
+                free(copy->key);
+                free(copy->info);
+                free(copy);
+                da_free(da);
+                return NULL;
+            }
         }
         else if (table->ks[pos].busy == EMPTY) {
-			break;
+            break;
         }
         pos = (pos + h2) % table->msize;
     }
-	
-	*count_key = da->count;
-	KeySpace **result = (KeySpace**)da->array;
-	free(da);
-    return result;
+    
+    *count = da->count;
+    KeySpace **result = (KeySpace**)da->array;
+    free(da);
+	return result;
 }
 
 table_err print_table(const Table * const table) {
