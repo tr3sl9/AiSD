@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall -Wextra -Werror -lreadline -Wno-implicit-fallthrough
+CFLAGS=-g -Wall -Wextra -Werror -lreadline
 CC=gcc
 OBJ=obj
 LIB_DIR=lib
@@ -8,7 +8,7 @@ TARGET=table
 SOURCES=$(filter-out main.c, $(wildcard *.c))
 OBJECTS=$(patsubst %.c,$(OBJ)/%.o,$(SOURCES))
 
-$(TARGET) : main.o $(LIB_TARGET)
+$(TARGET) : $(OBJ)/main.o $(LIB_TARGET)
 	@mkdir -p $(dir $@)
 	$(CC) -o $@ $^ $(CFLAGS)
 
@@ -21,7 +21,6 @@ clean :
 	rm -frv $(TARGET)
 	rm -fr $(LIB_TARGET)
 	rm -fr $(LIB_DIR)
-	rm main.o
 
 $(OBJ)/%.o : %.c
 	@mkdir -p $(OBJ)
