@@ -280,40 +280,40 @@ table_err import_table_from_file(Table * const table, const char * const filenam
     if (table->csize == table->msize) {
         return TABLE_FULL;
     }
+    
+    table_err result = TABLE_OK;
     FILE *file = fopen(filename, "r");
     if (!file) {
         return FILE_ERR;
     }
     
     if (check_magic_word(file) != TABLE_OK) {
-        fclose(file);
-        return TABLE_MAGIC_WORD;
+        result = TABLE_MAGIC_WORD;
+        goto exit_with_err;
     }
     
     size_t size_from_file;
     if (read_table_size_from_file(&size_from_file, file) != TABLE_OK) {
-        fclose(file);
-        return TABLE_SIZE;
+        result = TABLE_SIZE;
+        goto exit_with_err;
     }
 
     if (check_table_size(size_from_file) != TABLE_OK) {
-        fclose(file);
-        return TABLE_SIZE;
+        result = TABLE_SIZE;
+        goto exit_with_err;
     }
-
-    table_err result = TABLE_OK;
 
     while (table->csize < table->msize && size_from_file > 0) {
         if(read_ks(table, file) != TABLE_OK) {
             result = TABLE_VAL;
-            break;
+            goto exit_with_err;
         }
         size_from_file--;
     }
 
+exit_with_err:
     fclose(file);
     return result;
-
 }
 
 table_err export_table_to_file(const Table * const table, const char * const filename) {
