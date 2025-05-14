@@ -2,10 +2,10 @@
 #define MY_STRUCT_H
 
 typedef struct {
-	void * array;
-	size_t capacity;
-	size_t count; 
-	size_t size_of_one;
+    void * array;
+    size_t capacity;
+    size_t count; 
+    size_t size_of_one;
 } DynamicArray;
 
 DynamicArray *da_create(const size_t size_of_one);

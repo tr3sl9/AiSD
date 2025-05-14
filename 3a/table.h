@@ -4,29 +4,29 @@
 #include "table.h"
 
 typedef enum table_err {
-	TABLE_OK = 0,
-	TABLE_EMPTY = 1,
-	TABLE_FULL = 2,
-	TABLE_MEM = 3,
-	TABLE_NULL = 4, 
-	TABLE_VAL = 5,
-	TABLE_SIZE = 6,
-	TABLE_MAGIC_WORD = 7,
-	FILE_ERR = 8,
-	TABLE_EXIT = 9,
-	TABLE_EOF = -1
+    TABLE_OK = 0,
+    TABLE_EMPTY = 1,
+    TABLE_FULL = 2,
+    TABLE_MEM = 3,
+    TABLE_NULL = 4, 
+    TABLE_VAL = 5,
+    TABLE_SIZE = 6,
+    TABLE_MAGIC_WORD = 7,
+    FILE_ERR = 8,
+    TABLE_EXIT = 9,
+    TABLE_EOF = -1
 } table_err;
 
 typedef struct KeySpace {
-	char* key;
-	size_t release;
-	char* info;
+    char* key;
+    size_t release;
+    char* info;
 } KeySpace;
 
 typedef struct Table {
-	KeySpace *ks;
-	size_t msize;
-	size_t csize;
+    KeySpace *ks;
+    size_t msize;
+    size_t csize;
 } Table;
 
 Table *create_table(const size_t msize);
