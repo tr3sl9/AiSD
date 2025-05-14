@@ -39,7 +39,7 @@ make table
 
 ## запуск программы
 ```
-valgrind ./table const 
+valgrind ./table table_size 
 # or
-./table const
+./table table_size
 ```
