@@ -5,6 +5,8 @@
 #include "dialog.h"
 #include "testing.h"
 
+#define PROMPT_FOR_CHOICE_COMMAND "Choice command: "
+
 int main(int argc, char **argv){
 	if (argc != 2) {
 		printf("Error: not enough argumetns\n");
@@ -20,7 +22,7 @@ int main(int argc, char **argv){
 	while (end_program != 1){
 		show_menu();
 		size_t choice;
-		if(read_number(&choice, 0, 9) == TABLE_EOF) {
+		if(read_number(&choice, 0, 9, PROMPT_FOR_CHOICE_COMMAND) == TABLE_EOF) {
 			free_table(table);
 			return 1;
 		}

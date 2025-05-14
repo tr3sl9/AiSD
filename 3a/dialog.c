@@ -10,6 +10,7 @@
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
 #define PROMPT_FOR_FILE "Enter filename: "
+#define PROMPT_FOR_NUMBER "Enter number: "
 #define COUNT_OP sizeof(operations) / sizeof(operation)
 
 static char* read_info(const char * const prompt) {
@@ -92,7 +93,7 @@ static table_err dialog_find_release(Table * const table) {
 		return TABLE_EOF;
 	}
 	size_t release;
-	if (read_number(&release, 0, INT_MAX) == TABLE_EOF) {
+	if (read_number(&release, 0, INT_MAX, PROMPT_FOR_NUMBER) == TABLE_EOF) {
 		free(key);
 		return TABLE_EOF;
 	}
