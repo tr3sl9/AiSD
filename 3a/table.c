@@ -186,113 +186,134 @@ table_err print_table(const Table * const table) {
     return TABLE_OK;
 }
 
-static void realloc_attribute(char **atr, size_t *capacity) {
-    (*capacity) *= 2;
-    *atr = (char*)realloc(*atr, *capacity * sizeof(char));
-    return;
-}
-
-static void create_attribute(char **atr, size_t *capacity) {
-    *capacity = BUFSIZ;
-    *atr = (char*)malloc(*capacity * sizeof(char));
-    return;
-}
-
-static table_err read_row(char **atr, FILE *file, size_t *capacity) {
-    ssize_t c;
-    size_t current_len = 0;
-    if (!atr || !*atr || !capacity) {
-        return TABLE_VAL;
-    }
-
-    while((c = fgetc(file)) != EOF && c != '\n') {
-        if (current_len + 1 >= *capacity) {
-            realloc_attribute(atr, capacity);
-            if (!*atr) {
-                return TABLE_MEM;
-            }
+static char *read_row_from_file(FILE * const file){
+    char *res = NULL;
+    char buf[81] = {0};
+    int len = 0;
+    int n = 0;
+    do {
+        n = fscanf(file, "%80[^\n]", buf);
+        if(n < 0 && !res){
+            return NULL;
         }
-        (*atr)[current_len++] = (char)c;
+        else if(n > 0){
+            int len_p = strlen(buf);
+            int len_s = len + len_p;
+            res = realloc(res, (len_s + 1) * sizeof(char));
+            memcpy(res + len, buf, len_p);
+            len = len_s;
+        }
+        else{
+            fscanf(file, "%*c");
+        }
+    } while(n > 0);
+
+    if(len > 0){
+        res[len] = '\0';
+    }
+    else{
+        res = calloc(1, sizeof(char));
+    }
+    return res;
+}
+
+static table_err check_magic_word(FILE * const file) {
+    char magic_word[sizeof(MAGIC_WORD)] = {0};
+
+    fgets(magic_word, sizeof(magic_word), file);
+    if (cmp(magic_word, MAGIC_WORD) != 0) {
+        return TABLE_MAGIC_WORD;
     }
 
-    if (current_len == 0 && c == EOF) {
-        return TABLE_EOF;
-    }
-    if (current_len + 1 >= *capacity) {
-        realloc_attribute(atr, capacity);
-    }
-    if (!*atr) {
-        return TABLE_MEM;
-    }
-
-    (*atr)[current_len] = '\0';
     return TABLE_OK;
 }
 
+static table_err read_table_size_from_file(size_t * const size, FILE * const file) {
+    if (fscanf(file, "%zu\n", size) != 1) {
+        return TABLE_SIZE;
+    }
+    return TABLE_OK;
+}
+
+static table_err check_table_size(size_t size) {
+    if (size < 1) {
+        return TABLE_SIZE;
+    }
+    return TABLE_OK;
+}
+
+static void skip_empty_line(FILE * const file) {
+    int c = 0;
+    while((c = fgetc(file)) != EOF && c != '\n');
+    return;
+}
+
+static table_err read_ks(Table * const table, FILE * const file) {
+    char *key = NULL;
+    key = read_row_from_file(file);
+    if (key == NULL) {
+        return TABLE_VAL;
+    }
+
+    size_t release = 0;
+    if (fscanf(file, "%zu\n", &release) != 1 || release < 1) {
+        free(key);
+        return TABLE_VAL;
+    }
+
+    char *info = NULL;
+    info = read_row_from_file(file);
+    if (info == NULL) {
+        free(key);
+        return TABLE_VAL;
+    }
+
+    skip_empty_line(file);
+    set_ks(table->ks + table->csize, key, info, release);
+    table->csize++;
+    free(key);
+    free(info);
+    return TABLE_OK;
+} 
+
 table_err import_table_from_file(Table * const table, const char * const filename) {
+    if (table->csize == table->msize) {
+        return TABLE_FULL;
+    }
     FILE *file = fopen(filename, "r");
     if (!file) {
         return FILE_ERR;
     }
-
-    char magic_word[sizeof(MAGIC_WORD)] = {0};
-    fgets(magic_word, sizeof(magic_word), file);
-    if (cmp(magic_word, MAGIC_WORD) != 0) {
+    
+    if (check_magic_word(file) != TABLE_OK) {
         fclose(file);
         return TABLE_MAGIC_WORD;
     }
-
-    size_t msize, csize;
-    if (fscanf(file, "%zu %zu\n", &msize, &csize) != 2) {
-        fclose(file);
-        return TABLE_SIZE;
-    }
-    if (csize > msize || msize == 0) {
+    
+    size_t size_from_file;
+    if (read_table_size_from_file(&size_from_file, file) != TABLE_OK) {
         fclose(file);
         return TABLE_SIZE;
     }
 
-    char empty_line[2];
-    fgets(empty_line, sizeof(empty_line), file);
-    size_t key_capacity = 0, info_capacity = 0;
-    char *key = NULL, *info = NULL;
-    ssize_t release;
-
-    create_attribute(&key, &key_capacity);
-    if (!key) {
+    if (check_table_size(size_from_file) != TABLE_OK) {
         fclose(file);
-        return TABLE_MEM;
-    }    
-    create_attribute(&info, &info_capacity);
-    if (!info) {
-        free(key);
-        fclose(file);
-        return TABLE_MEM;
+        return TABLE_SIZE;
     }
 
     table_err result = TABLE_OK;
-    while (table->csize <= table->msize) {
-        result = read_row(&key, file, &key_capacity);
-        if (result != TABLE_OK) {
-            break;
-        }
-        if (fscanf(file, "%zd\n", &release) != 1 || release < 1) {
+
+    while (table->csize < table->msize && size_from_file > 0) {
+        if(read_ks(table, file) != TABLE_OK) {
             result = TABLE_VAL;
             break;
         }
-        result = read_row(&info, file, &info_capacity);
-        if (result != TABLE_OK) {
-            break;
-        }
-        fgets(empty_line, sizeof(empty_line), file);
-        set_ks(table->ks + table->csize, key, info, release);
-        table->csize++;
+        size_from_file--;
     }
 
-    free(key);
-    free(info);
     fclose(file);
     return result;
+
 }
 
 table_err export_table_to_file(const Table * const table, const char * const filename) {
@@ -302,7 +323,7 @@ table_err export_table_to_file(const Table * const table, const char * const fil
     }
 
     fprintf(file, "%s", MAGIC_WORD);
-    fprintf(file, "%zu %zu\n", table->msize, table->csize);
+    fprintf(file, "%zu\n", table->csize);
     for (size_t i = 0; i < table->csize; i++) {
         fprintf(file, "\n");
         fprintf(file, "%s\n%zu\n%s\n", table->ks[i].key, table->ks[i].release, table->ks[i].info);
