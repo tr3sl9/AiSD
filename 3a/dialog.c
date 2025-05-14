@@ -9,23 +9,13 @@
 
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
+#define PROMPT_FOR_FILE "Enter filename: "
 #define COUNT_OP sizeof(operations) / sizeof(operation)
 
-static char* read_key() {
-	char* key = NULL;
-	while (!key) {
-		key = readline(PROMPT_FOR_KEY);
-		if (key == NULL) {
-			return NULL;
-		} 
-	}
-	return key;
-}
-
-static char* read_info() {
+static char* read_info(const char * const prompt) {
 	char* info = NULL;
 	while (!info) {
-		info = readline(PROMPT_FOR_INFO);
+		info = readline(prompt);
 		if (info == NULL) {
 			return NULL;
 		} 
@@ -37,12 +27,12 @@ static table_err dialog_insert(Table * const table) {
 	if (table->csize >= table->msize) {
 		return TABLE_FULL;
 	}
-	char* key = read_key();
+	char* key = read_info(PROMPT_FOR_KEY);
 	if (!key) {
 		free(key);
 		return TABLE_EOF;
 	}
-	char* info = read_info();
+	char* info = read_info(PROMPT_FOR_INFO);
 	if (!info) {
 		free(key);
 		free(info);
@@ -58,7 +48,7 @@ static table_err dialog_delete(Table * const table) {
 	if (table->csize == 0) {
 		return TABLE_NULL;
 	}
-	char* key = read_key();
+	char* key = read_info(PROMPT_FOR_KEY);
 	if (!key) {
 		free(key);
 		return TABLE_EOF;
@@ -76,7 +66,7 @@ static table_err dialog_find(Table * const table) {
 	if (table->csize == 0) {
 		return TABLE_NULL;
 	}
-	char* key = read_key();
+	char* key = read_info(PROMPT_FOR_KEY);
 	if (!key) {
 		free(key);
 		return TABLE_EOF;
@@ -96,7 +86,7 @@ static table_err dialog_find_release(Table * const table) {
 	if (table->csize == 0) {
 		return TABLE_NULL;
 	}
-	char* key = read_key();
+	char* key = read_info(PROMPT_FOR_KEY);
 	if (!key) {
 		free(key);
 		return TABLE_EOF;
@@ -117,7 +107,7 @@ static table_err dialog_find_release(Table * const table) {
 }
 
 static table_err dialog_import(Table * const table) {
-	char *filename = read_info();
+	char *filename = read_info(PROMPT_FOR_FILE);
 	if (!filename) {
 		free(filename);
 		return FILE_ERR;
@@ -132,7 +122,7 @@ static table_err dialog_clean(Table * const table) {
 }
 
 static table_err dialog_export(Table * const table) {
-	char *filename = read_info();
+	char *filename = read_info(PROMPT_FOR_FILE);
 	if (!filename) {
 		free(filename);
 		return FILE_ERR;
