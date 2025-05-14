@@ -4,11 +4,10 @@
 #include "info_struct.h"
 
 Info *info_create(void) {
-	Info *info = (Info*)calloc(1, sizeof(size_t));
-	info->info = 0;
-	return info;
+	return (Info*)calloc(1, sizeof(size_t));
 } 
 
+//TODO char
 int info_insert(Info * const info, const size_t number) {
 	if (!info) return 0;
 	info->info = number;
@@ -22,8 +21,6 @@ void info_print(const Info * const info) {
 }
 
 void info_free(Info * const info) {
-	if (info) {
-		free(info);
-	}
+	free(info);
 	return;
 }	
