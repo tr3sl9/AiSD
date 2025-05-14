@@ -4,7 +4,7 @@
 #include <limits.h>
 
 #include "table.h"
-#include "my_struct.h"
+#include "da_library.h"
 #include "info_struct.h"
 
 #define MAGIC_WORD "HASH_TABLE\n"

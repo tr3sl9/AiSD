@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "table.h"
-#include "my_struct.h"
+#include "da_library.h"
 
 DynamicArray *da_create(const size_t size_of_one) {
 	DynamicArray *da = malloc(sizeof(DynamicArray));
