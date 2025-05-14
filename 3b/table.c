@@ -7,26 +7,29 @@
 #include "da_library.h"
 #include "info_struct.h"
 
+#define HASH_SEED 0x5bd1e995
 #define MAGIC_WORD "HASH_TABLE\n"
 
 //from lektion
 static size_t hash1(const char * const key, const size_t msize) {
     size_t hash = SIZE_MAX;
-	for (size_t i = 0; key[i] != '\0'; i++) {
-		hash = 37 * hash + key[i];
-	}
-	return hash > 0 ? hash % msize : -(hash) % msize;
+    for (size_t i = 0; key[i] != '\0'; i++) {
+        hash = 37 * hash + key[i];
+    }
+    return hash > 0 ? hash % msize : -(hash) % msize;
 }
 
 // MurmurHash
-static size_t hash2(const void * const key, size_t len, const size_t seed) {
-    const size_t m = 0x5bd1e995;
+static size_t hash2(const void * const key) {
+    const size_t seed = HASH_SEED;
+    const size_t m = HASH_SEED;
+    size_t len = strlen(key);
     const int r = 24;
     size_t h = seed ^ len;
     const unsigned char *data = (const unsigned char *)key;
     while(len >= sizeof(size_t)) {
         size_t k;
-		memcpy(&k, data, sizeof(size_t));
+        memcpy(&k, data, sizeof(size_t));
         k *= m;
         k ^= k >> r;
         k *= m;
@@ -48,17 +51,19 @@ static size_t hash2(const void * const key, size_t len, const size_t seed) {
 }
 
 int cmp(const char * const str_1, const char * const str_2) {
-	return strcmp(str_1, str_2);
+    return strcmp(str_1, str_2);
 }
 
 void print_ks(const KeySpace * const ks, const char * const status, const size_t i) {
-	printf("| %-5zu | %-8s | %-30s | %-20zu | %-9zu |\n", i, status, ks->key, ks->info->info, ks->release);
-	return;
+    printf("| %-5zu | %-8s | %-30s | %-20zu | %-9zu |\n", i, status, ks->key, ks->info->info, ks->release);
+    return;
 }
 
 Table *create_table(const size_t msize) {
     Table *table = (Table*)calloc(1, sizeof(Table));
-    if (!table) return NULL;
+    if (!table) {
+        return NULL;
+    }
 
     table->ks = (KeySpace*)calloc(msize, sizeof(KeySpace));
     if (!table->ks) {
@@ -67,13 +72,6 @@ Table *create_table(const size_t msize) {
     }
 
     table->msize = msize;
-    table->csize = 0;
-    for (size_t i = 0; i < msize; i++) {
-        table->ks[i].busy = EMPTY;
-		table->ks[i].key = NULL;
-		table->ks[i].release = 0;
-		table->ks[i].info = info_create();
-    }
     return table;
 }
 
@@ -82,7 +80,7 @@ void free_table(Table * const table) {
 
     for (size_t i = 0; i < table->msize; i++) {
         free_ks(table->ks + i); 
-		info_free(table->ks[i].info);
+        info_free(table->ks[i].info);
     }
 
     free(table->ks);
@@ -90,16 +88,16 @@ void free_table(Table * const table) {
 }
 
 void free_ks(KeySpace * const ks) {
-	ks->busy = DELETED;
-	free(ks->key);
-	ks->key = NULL;
-	return;
+    ks->busy = DELETED;
+    free(ks->key);
+    ks->key = NULL;
+    return;
 }
 
 static size_t find_max_release(const Table * const table, const char * const key) {
     size_t release = 0;
     size_t h1 = hash1(key, table->msize);
-    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t h2 = hash2(key);
     size_t pos = h1;
     
     for (size_t i = 0; i < table->msize; i++) {
@@ -114,22 +112,28 @@ static size_t find_max_release(const Table * const table, const char * const key
 }
 
 static void set_ks(KeySpace * const ks, const size_t busy, const char * const key, const size_t info, const size_t release) {
-	if (!ks || !key || !info) return;
+    if (!ks || !key || !info) {
+        return;
+    }
 
-	ks->busy = busy;
-	ks->key = strdup(key);
-	if (release != 0) ks->release = release;
-	info_insert(ks->info, info);
+    ks->busy = busy;
+    ks->key = strdup(key);
+    if (release != 0) {
+        ks->release = release;
+    }
+    info_insert(ks->info, info);
 
-	return;
+    return;
 }
 
 DynamicArray* find_elements(const Table * const table, const char * const key) {
     DynamicArray *da = da_create(sizeof(KeySpace*));
-    if (!da) return NULL;
+    if (!da) {
+        return NULL;
+    }
     
     size_t h1 = hash1(key, table->msize);
-    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t h2 = hash2(key);
     size_t pos = h1;
     
     for (size_t i = 0; i < table->msize; i++) {
@@ -149,17 +153,21 @@ DynamicArray* find_elements(const Table * const table, const char * const key) {
 }
 
 table_err insert_key_to_table(Table * const table, const char * const key, const size_t info) {
-    if (!table || !key) return TABLE_NULL;
-    if (table->csize >= table->msize) return TABLE_FULL;
+    if (!table || !key) {
+        return TABLE_NULL;
+    }
+    if (table->csize >= table->msize) {
+        return TABLE_FULL;
+    }
 
     size_t h1 = hash1(key, table->msize);
-    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t h2 = hash2(key);
     size_t pos = h1;
 
     size_t release = find_max_release(table, key) + 1;
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy != BUSY) {
-			set_ks(table->ks + pos, BUSY, key, info, release);
+            set_ks(table->ks + pos, BUSY, key, info, release);
             table->csize++;
             return TABLE_OK;
         }
@@ -170,18 +178,24 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
 }
 
 table_err delete_key_from_table(Table * const table, const char * const key) {
-    if (!table) return TABLE_NULL;
-    if (!key) return TABLE_VAL;
-    if (table->csize == 0) return TABLE_EMPTY;
+    if (!table) {
+        return TABLE_NULL;
+    }
+    if (!key) {
+        return TABLE_VAL;
+    }
+    if (table->csize == 0) {
+        return TABLE_EMPTY;
+    }
 
     size_t h1 = hash1(key, table->msize);
-    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t h2 = hash2(key);
     size_t pos = h1;
     size_t found = 0;
 
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy == BUSY && strcmp(table->ks[pos].key, key) == 0) {
-			table->ks[pos].busy = DELETED;
+            table->ks[pos].busy = DELETED;
             table->csize--;
             found = 1;
         }
@@ -195,17 +209,19 @@ table_err delete_key_from_table(Table * const table, const char * const key) {
 }
 
 KeySpace* search_by_key_with_release_in_table(const Table * const table, const char * const key, const size_t release) {
-    if (!table || !key) return NULL;
+    if (!table || !key) {
+        return NULL;
+    }
     
     size_t h1 = hash1(key, table->msize);
-    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t h2 = hash2(key);
     size_t pos = h1;
     
     for (size_t i = 0; i < table->msize; i++) {
         if (table->ks[pos].busy == BUSY && strcmp(table->ks[pos].key, key) == 0 && table->ks[pos].release == release) {
             
             KeySpace *copy = (KeySpace*)malloc(sizeof(KeySpace));
-			copy->info = info_create();
+            copy->info = info_create();
             if (!copy) return NULL;
             set_ks(copy, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
             
@@ -227,13 +243,17 @@ KeySpace* search_by_key_with_release_in_table(const Table * const table, const c
 }
 
 KeySpace** search_by_key_in_table(const Table * const table, const char * const key, size_t *count) {
-    if (!table || !key || !count) return NULL;
+    if (!table || !key || !count) {
+        return NULL;
+    }
     
     DynamicArray *da = da_create(sizeof(KeySpace**));
-    if (!da) return NULL;
+    if (!da) {
+        return NULL;
+    }
     
     size_t h1 = hash1(key, table->msize);
-    size_t h2 = hash2(key, strlen(key), 0x9747b28c);
+    size_t h2 = hash2(key);
     size_t pos = h1;
     
     for (size_t i = 0; i < table->msize; i++) {
@@ -273,38 +293,48 @@ KeySpace** search_by_key_in_table(const Table * const table, const char * const 
     *count = da->count;
     KeySpace **result = (KeySpace**)da->array;
     free(da);
-	return result;
+    return result;
 }
 
 table_err print_table(const Table * const table) {
-    if (!table) return TABLE_NULL;
+    if (!table) {
+        return TABLE_NULL;
+    }
+
     printf("\nTable contents (%zu/%zu):\n", table->csize, table->msize);
     printf("┌───────┬──────────┬────────────────────────────────┬──────────────────────┬───────────┐\n");
     printf("│ Index │ Status   │ Key                            │ Info                 │ Release   │\n");
     printf("├───────┼──────────┼────────────────────────────────┼──────────────────────┼───────────┤\n");
     for (size_t i = 0; i < table->msize; i++) {
-		char *status;
+        char *status;
         switch(table->ks[i].busy) {
             case EMPTY:  status = "EMPTY"; break;
             case BUSY:   status = "BUSY"; break;
             case DELETED: status = "DELETED"; break;
             default:     status = "UNKNOWN"; break;
         }
-		print_ks(table->ks + i, status, i);   
+        print_ks(table->ks + i, status, i);   
         if (i < table->msize - 1) {
             printf("├───────┼──────────┼────────────────────────────────┼──────────────────────┼───────────┤\n");
         }
     }
     printf("└───────┴──────────┴────────────────────────────────┴──────────────────────┴───────────┘\n");
+
     return TABLE_OK;
 }
 
 table_err import_table_from_file(Table * const table, const char * const filename) {
-    if (!table) return TABLE_NULL;
-    if (!filename) return FILE_ERR;
+    if (!table) {
+        return TABLE_NULL;
+    }
+    if (!filename) {
+        return FILE_ERR;
+    }
     
     FILE *file = fopen(filename, "rb");
-    if (!file) return FILE_ERR;
+    if (!file) {
+        return FILE_ERR;
+    }
 
     char magic_word[sizeof(MAGIC_WORD)] = {0};
     if (fread(magic_word, sizeof(char), sizeof(MAGIC_WORD) - 1, file) != sizeof(MAGIC_WORD) - 1 || cmp(magic_word, MAGIC_WORD) != 0) {
@@ -367,11 +397,17 @@ table_err import_table_from_file(Table * const table, const char * const filenam
 }
 
 table_err export_table_to_file(const Table * const table, const char * const filename) {
-    if (!table) return TABLE_NULL;
-	if (!filename) return FILE_ERR;
+    if (!table) {
+        return TABLE_NULL;
+    }
+    if (!filename) {
+        return FILE_ERR;
+    }
     
     FILE* file = fopen(filename, "wb");
-    if (!file) return FILE_ERR;
+    if (!file) {
+        return FILE_ERR;
+    }
 
     if (fwrite(MAGIC_WORD, sizeof(char), sizeof(MAGIC_WORD) - 1, file) != sizeof(MAGIC_WORD) - 1) {
         fclose(file);

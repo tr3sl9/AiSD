@@ -5,8 +5,8 @@
 typedef table_err (*functions)(struct Table*);
 
 typedef struct {
-	functions func;
-	char *msg;
+    functions func;
+    char *msg;
 } operation;
 
 void show_menu();

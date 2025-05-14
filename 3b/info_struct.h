@@ -2,7 +2,7 @@
 #define INFO_STRUCT_H
 
 typedef struct {
-	size_t info;
+    size_t info;
 } Info;
 
 Info *info_create(void);
