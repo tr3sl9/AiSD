@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include "testing.h"
-#include "table.h"
+#include "../lib/table.h"
 
 table_err read_positive_number(size_t * const count, const char * prompt) {
     int p2 = 0;

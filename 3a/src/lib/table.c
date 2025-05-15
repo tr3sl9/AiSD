@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "table.h"
-#include "da_library.h"
+#include "../client/da_library.h"
 
 #define MAGIC_WORD "TABLE\n"
 
