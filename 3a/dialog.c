@@ -13,27 +13,16 @@
 #define PROMPT_FOR_NUMBER "Enter number: "
 #define COUNT_OP sizeof(operations) / sizeof(operation)
 
-static char* read_info(const char * const prompt) {
-    char* info = NULL;
-    while (!info) {
-        info = readline(prompt);
-        if (info == NULL) {
-            return NULL;
-        } 
-    }
-    return info;
-}
-
 static table_err dialog_insert(Table * const table) {
     if (table->csize >= table->msize) {
         return TABLE_FULL;
     }
-    char* key = read_info(PROMPT_FOR_KEY);
+    char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
     }
-    char* info = read_info(PROMPT_FOR_INFO);
+    char* info = readline(PROMPT_FOR_INFO);
     if (!info) {
         free(key);
         free(info);
@@ -49,7 +38,7 @@ static table_err dialog_delete(Table * const table) {
     if (table->csize == 0) {
         return TABLE_NULL;
     }
-    char* key = read_info(PROMPT_FOR_KEY);
+    char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
@@ -67,7 +56,7 @@ static table_err dialog_find(Table * const table) {
     if (table->csize == 0) {
         return TABLE_NULL;
     }
-    char* key = read_info(PROMPT_FOR_KEY);
+    char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
@@ -87,7 +76,7 @@ static table_err dialog_find_release(Table * const table) {
     if (table->csize == 0) {
         return TABLE_NULL;
     }
-    char* key = read_info(PROMPT_FOR_KEY);
+   char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
@@ -99,6 +88,7 @@ static table_err dialog_find_release(Table * const table) {
     }
     Table *result = search_by_key_with_release_in_table(table, key, release);
     if (!result || result->csize == 0) {
+        free(key);
         return TABLE_VAL;
     }
     print_table(result);
@@ -108,7 +98,7 @@ static table_err dialog_find_release(Table * const table) {
 }
 
 static table_err dialog_import(Table * const table) {
-    char *filename = read_info(PROMPT_FOR_FILE);
+    char *filename = readline(PROMPT_FOR_FILE);
     if (!filename) {
         free(filename);
         return FILE_ERR;
@@ -123,7 +113,7 @@ static table_err dialog_clean(Table * const table) {
 }
 
 static table_err dialog_export(Table * const table) {
-    char *filename = read_info(PROMPT_FOR_FILE);
+    char *filename = readline(PROMPT_FOR_FILE);
     if (!filename) {
         free(filename);
         return FILE_ERR;

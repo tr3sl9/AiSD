@@ -364,13 +364,13 @@ Table* search_by_key_with_release_in_table(const Table * const table, const char
         return NULL;
     }
 
-    Table *result = create_table(1);
-    if (!result) {
+    KeySpace *ks = find_element_with_release(table, key, release);
+    if (!ks) {
         return NULL;
     }
 
-    KeySpace *ks = find_element_with_release(table, key, release);
-    if (!ks) {
+    Table *result = create_table(1);
+    if (!result) {
         return NULL;
     }
 
