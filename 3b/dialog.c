@@ -13,30 +13,19 @@
 #define PROMPT_FOR_NUMBER "Enter number: "
 #define COUNT_OP sizeof(operations) / sizeof(operation)
 
-char* read_info(const char * const prompt) {
-    char* info = NULL;
-    while (!info) {
-        info = readline(prompt);
-        if (info == NULL) {
-            return NULL;
-        } 
-    }
-    return info;
-}
-
 table_err dialog_insert(Table * const table) {
     if (table->csize >= table->msize) {
         return TABLE_FULL;
     }
 
-    char *key = read_info(PROMPT_FOR_KEY);
+    char *key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
     }
 
     size_t info = 0;
-    if (read_number(&info, 0, SIZE_MAX, PROMPT_FOR_NUMBER) == TABLE_EOF) {
+    if (read_positive_number(&info, PROMPT_FOR_NUMBER) == TABLE_EOF) {
         free(key);
         return TABLE_EOF;
     }
@@ -52,7 +41,7 @@ table_err dialog_delete(Table * const table) {
         return TABLE_EMPTY;
     }
     
-    char* key = read_info(PROMPT_FOR_KEY);
+    char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
@@ -69,7 +58,7 @@ table_err dialog_find(Table * const table) {
         return TABLE_EMPTY;
     }
     
-    char* key = read_info(PROMPT_FOR_KEY);
+    char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
@@ -107,14 +96,14 @@ table_err dialog_find_release(Table * const table) {
         return TABLE_EMPTY;
     }
     
-    char* key = read_info(PROMPT_FOR_KEY);
+    char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
         free(key);
         return TABLE_EOF;
     }
     
     size_t release = 0;
-    if (read_number(&release, 0, SIZE_MAX, PROMPT_FOR_NUMBER) == TABLE_EOF) {
+    if (read_positive_number(&release, PROMPT_FOR_NUMBER) == TABLE_EOF) {
         free(key);
         return TABLE_EOF;
     }
@@ -144,7 +133,7 @@ table_err dialog_print(Table * const table) {
 }
 
 table_err dialog_import(Table * const table) {
-    char* filename = read_info(PROMPT_FOR_FILE);
+    char* filename = readline(PROMPT_FOR_FILE);
     if (!filename) {
         free(filename);
         return FILE_ERR;
@@ -156,7 +145,7 @@ table_err dialog_import(Table * const table) {
 }
 
 table_err dialog_export(Table * const table) {
-    char* filename = read_info(PROMPT_FOR_FILE);
+    char* filename = readline(PROMPT_FOR_FILE);
     if (!filename) {
         free(filename);
         return TABLE_EOF;

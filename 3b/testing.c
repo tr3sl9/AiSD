@@ -2,6 +2,23 @@
 #include "testing.h"
 #include "table.h"
 
+table_err read_positive_number(size_t * const count, const char * prompt) {
+    int p2 = 0;
+    while(p2 != 1){
+        printf(prompt);
+        p2 = scanf("%zu", count);
+        if(p2 == 0){
+            printf("Error: invalid data type\n");
+            printf("Enter the number again: ");
+            scanf("%*[^\n]");
+        }
+        else if(p2 == EOF){
+            return TABLE_EOF;
+        }
+    }
+    return 0;
+}
+
 table_err read_number(size_t * const count, const size_t min, const size_t max, const char * const prompt){
     int p2 = 0;
     while(p2 != 1){
