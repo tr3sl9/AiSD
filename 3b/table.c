@@ -121,6 +121,7 @@ static void set_ks(KeySpace * const ks, const size_t busy, const char * const ke
     if (release != 0) {
         ks->release = release;
     }
+    
     info_insert(ks->info, info);
 
     return;

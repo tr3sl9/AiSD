@@ -6,7 +6,7 @@ typedef struct {
 } Info;
 
 Info *info_create(void);
-int info_insert(Info * const, const size_t number);
+char info_insert(Info * const, const size_t number);
 void info_print(const Info * const);
 void info_free(Info * const);
 
