@@ -82,7 +82,7 @@ static table_err dialog_find_release(Table * const table) {
         return TABLE_EOF;
     }
     size_t release;
-    if (read_number(&release, 0, INT_MAX, PROMPT_FOR_NUMBER) == TABLE_EOF) {
+    if (read_positive_number(&release, PROMPT_FOR_NUMBER) == TABLE_EOF) {
         free(key);
         return TABLE_EOF;
     }
