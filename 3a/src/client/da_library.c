@@ -5,7 +5,9 @@
 
 DynamicArray *da_create(const size_t size_of_one) {
     DynamicArray *da = malloc(sizeof(DynamicArray));
-    if (!da) return NULL;
+    if (!da) {
+        return NULL;
+    }
 
     da->capacity = 4;
     da->count = 0;
@@ -43,7 +45,9 @@ void da_print(const DynamicArray * const da, void(*print_item)(const void *)) {
 }
 
 int da_delete_el(DynamicArray *da, size_t index) {
-    if (!da || index >= da->count) return 0;
+    if (!da || index >= da->count) {
+        return 0;
+    }
     
     if (index < da->count - 1) {
         void *dest = (char *)da->array + index * da->size_of_one;

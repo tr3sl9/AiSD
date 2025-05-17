@@ -1,5 +1,5 @@
-#ifndef MY_STRUCT_H
-#define MY_STRUCT_H
+#ifndef DA_LIBRARY_H
+#define DA_LIBRARY_H
 
 typedef struct {
     void * array;

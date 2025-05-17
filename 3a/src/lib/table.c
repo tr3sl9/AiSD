@@ -236,10 +236,7 @@ static table_err read_table_size_from_file(size_t * const size, FILE * const fil
 }
 
 static table_err check_table_size(size_t size) {
-    if (size < 1) {
-        return TABLE_SIZE;
-    }
-    return TABLE_OK;
+    return (size < 1) ? TABLE_SIZE : TABLE_OK 
 }
 
 static void skip_empty_line(FILE * const file) {
