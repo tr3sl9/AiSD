@@ -1,29 +1,38 @@
-CFLAGS=-g -Wall -Wextra -Wpedantic -Werror -lreadline -Wno-implicit-fallthrough
+CFLAGS=-g -Wall -Wextra -Werror
+LDFLAGS=-lreadline
 CC=gcc
-OBJ=obj
-LIB_DIR=lib
-LIB_TARGET=$(LIB_DIR)/libtable.a
+OBJ_CLIENT=obj/client
+OBJ_LIB=obj/lib
+SRC_CLIENT=src/client
+SRC_LIB=src/lib
+LIB_TARGET=libtable.a
 TARGET=table
 
-SOURCES=$(filter-out main.c, $(wildcard *.c))
-OBJECTS=$(patsubst %.c,$(OBJ)/%.o,$(SOURCES))
+SOURCES_CLIENT=$(wildcard $(SRC_CLIENT)/*.c)
+OBJECTS_CLIENT=$(patsubst $(SRC_CLIENT)/%.c,$(OBJ_CLIENT)/%.o,$(SOURCES_CLIENT))
 
-$(TARGET) : $(OBJ)/main.o $(LIB_TARGET)
+SOURCES_LIB=$(wildcard $(SRC_LIB)/*.c)
+OBJECTS_LIB=$(patsubst $(SRC_LIB)/%.c,$(OBJ_LIB)/%.o,$(SOURCES_LIB))
+
+$(TARGET): $(OBJECTS_CLIENT) $(LIB_TARGET)
 	@mkdir -p $(dir $@)
-	$(CC) -o $@ $^ $(CFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
 
-$(LIB_TARGET) : $(OBJECTS)
-	@mkdir -p $(LIB_DIR)
+$(LIB_TARGET): $(OBJECTS_LIB)
+	@mkdir -p $(dir $@)
 	ar rcs $@ $^
 
-clean :
-	rm -fr $(OBJ)
-	rm -frv $(TARGET)
-	rm -fr $(LIB_TARGET)
-	rm -fr $(LIB_DIR)
+clean:
+	rm -fr obj
+	rm -fv $(TARGET)
+	rm -fv $(LIB_TARGET)
 
-$(OBJ)/%.o : %.c
-	@mkdir -p $(OBJ)
-	$(CC) -o $@ $< -c $(CFLAGS)
+$(OBJ_CLIENT)/%.o: $(SRC_CLIENT)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+$(OBJ_LIB)/%.o: $(SRC_LIB)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) -o $@ -c $< $(CFLAGS)
 
 .PHONY: clean
