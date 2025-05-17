@@ -248,29 +248,30 @@ static void skip_empty_line(FILE * const file) {
 static table_err read_ks(Table * const table, FILE * const file) {
     char *key = NULL;
     key = read_row_from_file(file);
+    table_err result = TABLE_OK;
     if (key == NULL) {
-        return TABLE_VAL;
+        result = TABLE_VAL;
     }
 
     size_t release = 0;
     if (fscanf(file, "%zu\n", &release) != 1 || release < 1) {
-        free(key);
-        return TABLE_VAL;
+        result = TABLE_VAL;
     }
 
     char *info = NULL;
     info = read_row_from_file(file);
     if (info == NULL) {
-        free(key);
-        return TABLE_VAL;
+        result = TABLE_VAL;
     }
 
     skip_empty_line(file);
-    set_ks(table->ks + table->csize, key, info, release);
-    table->csize++;
+    if (result == TABLE_OK) {
+        set_ks(table->ks + table->csize, key, info, release);
+        table->csize++;
+    }
     free(key);
     free(info);
-    return TABLE_OK;
+    return result;
 } 
 
 table_err import_table_from_file(Table * const table, const char * const filename) {
@@ -303,10 +304,10 @@ table_err import_table_from_file(Table * const table, const char * const filenam
     while (table->csize < table->msize && size_from_file > 0) {
         if(read_ks(table, file) != TABLE_OK) {
             result = TABLE_VAL;
-            goto exit_with_err;
         }
         size_from_file--;
     }
+    goto exit_with_err;
 
 exit_with_err:
     fclose(file);
