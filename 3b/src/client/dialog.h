@@ -1,6 +1,6 @@
 #ifndef DIALOG_H
 #define DIALOG_H
-#include "table.h"
+#include "../lib/table.h"
 
 typedef table_err (*functions)(struct Table*);
 

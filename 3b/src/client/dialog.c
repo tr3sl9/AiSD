@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <readline/readline.h>
-#include "table.h"
+#include "../lib/table.h"
 #include "dialog.h"
 #include "testing.h"
 

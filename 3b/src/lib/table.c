@@ -4,8 +4,8 @@
 #include <limits.h>
 
 #include "table.h"
-#include "da_library.h"
-#include "info_struct.h"
+#include "../client/da_library.h"
+#include "../client/info_struct.h"
 
 #define HASH_SEED 0x5bd1e995
 #define MAGIC_WORD "HASH_TABLE\n"

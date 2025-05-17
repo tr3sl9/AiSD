@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdint.h>
 
-#include "da_library.h"
-#include "info_struct.h"
+#include "../client/da_library.h"
+#include "../client/info_struct.h"
 
 typedef enum table_err {
     TABLE_OK = 0,
