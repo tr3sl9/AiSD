@@ -9,10 +9,10 @@ Info *info_create(void) {
 
 char info_insert(Info * const info, const size_t number) {
     if (!info) {
-        return '0';
+        return 0;
     }
     info->info = number;
-    return '1';
+    return 1;
 }
 
 void info_print(const Info * const info) {
