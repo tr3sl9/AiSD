@@ -4,7 +4,7 @@
 #include "info_struct.h"
 
 Info *info_create(void) {
-    return (Info*)calloc(1, sizeof(size_t));
+    return (Info*)calloc(1, sizeof(Info));
 } 
 
 char info_insert(Info * const info, const size_t number) {

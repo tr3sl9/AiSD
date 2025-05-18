@@ -10,6 +10,7 @@
 #define PROMPT_FOR_KEY "Enter key: "
 #define PROMPT_FOR_INFO "Enter info: "
 #define PROMPT_FOR_FILE "Enter filename: "
+#define PROMPT_FOR_RELEASE "Enter release: "
 #define PROMPT_FOR_NUMBER "Enter number: "
 #define COUNT_OP sizeof(operations) / sizeof(operation)
 
@@ -60,13 +61,12 @@ table_err dialog_find(Table * const table) {
     
     char* key = readline(PROMPT_FOR_KEY);
     if (!key) {
-        free(key);
         return TABLE_EOF;
     }
 
-    size_t count_key = 0; 
+    size_t count_key = 0;
     KeySpace** elements = search_by_key_in_table(table, key, &count_key);
-    if (!elements) {
+    if (!elements || count_key == 0) {
         free(key);
         return TABLE_VAL;
     }
@@ -80,7 +80,6 @@ table_err dialog_find(Table * const table) {
         if (i < count_key - 1) {
             printf("├───────────┼──────────────────────┤\n");
         }
-        info_free(elements[i]->info);
         free_ks(elements[i]);
         free(elements[i]);
     }
@@ -103,7 +102,7 @@ table_err dialog_find_release(Table * const table) {
     }
     
     size_t release = 0;
-    if (read_positive_number(&release, PROMPT_FOR_NUMBER) == TABLE_EOF) {
+    if (read_positive_number(&release, PROMPT_FOR_RELEASE) == TABLE_EOF) {
         free(key);
         return TABLE_EOF;
     }
@@ -121,7 +120,6 @@ table_err dialog_find_release(Table * const table) {
     printf("│ %-20zu │\n", element->info->info);
     printf("└──────────────────────┘\n");
     
-    info_free(element->info);
     free_ks(element);
     free(element);
     free(key);
