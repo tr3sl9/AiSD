@@ -31,6 +31,7 @@ int da_append(DynamicArray *da, const void *item) {
         da->array = new_array;
         da->capacity = new_capacity;
     }
+
     memcpy((char*)da->array + da->count * da->size_of_one, item, da->size_of_one);
     da->count++;
     return 1; 
@@ -43,6 +44,8 @@ void da_print(const DynamicArray * const da, void(*print_item)(const void *)) {
         print_item((char *)da->array + i * da->size_of_one);
         printf("\n");
     }
+    
+    return;
 }
 
 int da_delete_el(DynamicArray *da, size_t index) {
@@ -66,4 +69,6 @@ void da_free(DynamicArray * const da) {
         free(da->array);
         free(da);
     }
+
+    return;
 }

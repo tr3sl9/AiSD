@@ -95,13 +95,17 @@ void free_table(Table * const table) {
     free(table);
 }
 
-size_t comparing_same_ks(const KeySpace * const first_ks, const char * key) {
+static char same_keys(const KeySpace * const ks, const char * const key) {
+    return (ks.busy == BUSY && cmp(ks.key, key) == 0);
+}
+
+static size_t comparing_same_ks(const KeySpace * const first_ks, const char * const key) {
     if (!first_ks || !key) {
         return 0;
     }
     
     size_t release = 0;
-    if (first_ks.busy == BUSY && cmp(first_ks.key, key) == 0) {
+    if (same_keys(first_ks, key)) {
         if (first_ks.release > release) {
             release = first_ks.release;
         }
@@ -154,7 +158,7 @@ DynamicArray* find_elements(const Table * const table, const char * const key) {
     size_t pos = h1;
 
     for (size_t i = 0; i < table->msize; i++) {
-        if (table->ks[pos].busy == BUSY && cmp(table->ks[pos].key, key) == 0) {
+        if (same_keys(table->ks[pos], key)) {
             if (!da_append(da, &(table->ks[pos]))) {
                 da_free(da);
                 return NULL;
