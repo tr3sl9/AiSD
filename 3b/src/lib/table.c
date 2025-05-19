@@ -10,7 +10,6 @@
 #define HASH_SEED 0x5bd1e995
 #define MAGIC_WORD "HASH_TABLE\n"
 
-//from lektion
 static size_t hash1(const char * const key, const size_t msize) {
     size_t hash = SIZE_MAX;
     for (size_t i = 0; key[i] != '\0'; i++) {
@@ -218,8 +217,10 @@ table_err insert_key_to_table(Table * const table, const char * const key, const
                 return TABLE_MEM;
             }
             table->csize++;
+            printf("\nhash1, hash2, pos: %zu %zu %zu\n", h1, h2, pos);
             return TABLE_OK;
         }
+        printf("\nhash1, hash2, pos: %zu %zu %zu\n", h1, h2, pos);
         pos = (pos + h2) % table->msize;
     }
 
@@ -307,26 +308,32 @@ KeySpace** search_by_key_in_table(const Table * const table, const char * const 
     size_t h2 = hash2(key);
     size_t pos = h1;
     
-    KeySpace *copy = (KeySpace*)calloc(1, sizeof(KeySpace));
-    if (!copy) {
-        da_free(da);
-        return NULL;
-    }
-
     for (size_t i = 0; i < table->msize; i++) {
         if (same_keys(table->ks + pos, key)) {
+            KeySpace *copy = (KeySpace*)calloc(1, sizeof(KeySpace));
             if (!copy) {
+                da_free(da);
+                info_free(copy->info);
+                free(copy);
                 da_free(da);
                 return NULL;
             }
 
             set_ks(copy, BUSY, key, table->ks[pos].info->info, table->ks[pos].release);
             if (!copy->info || !copy->key) {
-                goto exit_with_null;
+                free(copy->key);
+                info_free(copy->info);
+                free(copy);
+                da_free(da);
+                return NULL;
             }
 
             if (!da_append(da, &copy)) {
-                goto exit_with_null;
+                free(copy->key);
+                info_free(copy->info);
+                free(copy);
+                da_free(da);
+                return NULL;
             }
         }
         else if (table->ks[pos].busy == EMPTY) {
@@ -334,19 +341,16 @@ KeySpace** search_by_key_in_table(const Table * const table, const char * const 
         }
         pos = (pos + h2) % table->msize;
     }
+    
+    if(da->count == 0) {
+        da_free(da);
+        return NULL;
+    }
 
     *count = da->count;
     KeySpace **result = (KeySpace**)da->array;
     free(da);
     return result;
-
-exit_with_null:
-    free(copy->key);
-    info_free(copy->info);
-    free(copy);
-    da_free(da);
-    return NULL;
-
 }
 
 table_err print_table(const Table * const table) {

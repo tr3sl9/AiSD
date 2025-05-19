@@ -1,4 +1,4 @@
-CFLAGS=-g -Wall -Wextra -Wpedantic -Werror -Wno-implicit-fallthrough
+CFLAGS=-g -Wall -Wextra -Werror -Wpedantic -Wno-implicit-fallthrough
 LDFLAGS=-lreadline
 CC=gcc
 OBJ_CLIENT=obj/client
