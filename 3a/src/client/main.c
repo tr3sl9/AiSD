@@ -12,7 +12,7 @@ int main(int argc, char **argv){
         printf("Error: not enough argumetns\n");
         return 1;
     }
-    size_t atoi_argv_1 = atoi(argv[1]);
+    int atoi_argv_1 = atoi(argv[1]);
     if (atoi_argv_1 <= 0) {
         printf("Error: table size mismatch\n");
         return 1;
