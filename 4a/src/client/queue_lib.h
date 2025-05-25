@@ -25,6 +25,8 @@ queue_err queue_push(Queue * const, TreeNode * const);
 TreeNode *queue_pop(Queue * const);
 TreeNode *queue_peak(const Queue * const);
 
+char queue_not_empty(const Queue * const);
+
 void queue_free(Queue * const);
 
 #endif 

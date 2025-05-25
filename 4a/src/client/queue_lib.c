@@ -62,3 +62,7 @@ void queue_free(Queue * const queue) {
     free(queue);
     return;
 }
+
+char queue_not_empty(const Queue * const queue) {
+    return queue->size != 0;
+}
