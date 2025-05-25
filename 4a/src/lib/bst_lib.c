@@ -3,6 +3,8 @@
 #include <string.h>
 #include "bst_lib.h"
 #include "../client/info_struct.h"
+#include "../client/queue_lib.h"
+#include "../client/stack_lib.h"
 
 BST *create_tree() {
     BST *tree = (BST*)calloc(1, sizeof(BST));
@@ -40,6 +42,34 @@ void free_key_and_info(TreeNode * const node) {
     return;
 }
 
+void free_tree(BST * const tree) {
+    if (!tree->root) {
+        return;
+    }
+
+    Queue *queue = queue_create(tree->size);
+
+    if (queue_push(queue, tree->root) != QUEUE_OK) {
+        return;
+    }
+
+    while (queue_not_empty(queue) != 0) {
+        TreeNode *node = queue_pop(queue);
+        if (!node->left) {
+            queue_push(queue, node->left);
+        }
+        if (!node->right) {
+            queue_push(queue, node->right);
+        }
+        
+        free(node);
+    }
+
+    queue_free(queue);
+    tree->root = NULL;
+    return;
+}
+
 void set_key_and_info(TreeNode * const node, const size_t key, const Info * const info) {
     if (!node || !key || !info) {
         return TREE_VAL;
@@ -48,6 +78,76 @@ void set_key_and_info(TreeNode * const node, const size_t key, const Info * cons
     node->key = key;
     node->info = info;
     return;
+}
+
+TreeNode *find_tree(const BST * const tree, const size_t key) {
+    if (!tree) {
+        return NULL;
+    }
+    if (!key) {
+        return NULL;
+    }
+
+    TreeNode *current = tree->root;
+    while (current) {
+        if (key > current->key) {
+            current = current->right;
+        }
+        else if (key < current->key) {
+            current = current->left;
+        } else {
+            break;
+        }
+    }
+
+    return current;
+}
+
+TreeNode *find_release_tree(const TreeNode * const current, const size_t key, const size_t release) {
+    if (!tree) {
+        return NULL;
+    }
+    if (!key) {
+        return NULL;
+    }
+
+    size_t count = 1;
+    while (current) {
+        if (current->key == key && release == count) {
+            return current;
+        }
+        else if (current->left->key == key) {
+            count++;
+            current = current->left;
+        } else {
+            break;
+        }
+    }
+
+    return NULL;
+}
+
+TreeNode *special_find_tree(const BST * const tree, const size_t key) {
+    if (!tree) {
+        return NULL;
+    }
+    if (!key) {
+        return NULL;
+    }
+
+    TreeNode *current = tree->root;
+    while (current) {
+        if (key > current->key) {
+            current = current->right;
+        }
+        else if (key < current->key) {
+            current = current->left;
+        } else {
+            break;
+        }
+    }
+
+    return current;
 }
 
 tree_err insert_tree(BST * const tree, const size_t key, const Info * const info) {
@@ -85,6 +185,7 @@ tree_err insert_tree(BST * const tree, const size_t key, const Info * const info
         current_parent->left = new_node;
     }
     new_node->parent = current_parent;
+    tree->size++;
     
     return TREE_OK;
 }
@@ -143,6 +244,36 @@ tree_err delete_tree(BST * const tree, const size_t key) {
             tree->root = child;
         }
         free(current);
+    }
+    
+    tree->size--;
+    return TREE_OK;
+}
+
+tree_err walk_tree(const BST * const tree) {
+    if (!tree) {
+        return TREE_NULL;
+    }
+    
+    Stack *stack = stack_create(tree->size);
+    if (!stack) {
+        return TREE_VAL;
+    }
+
+    TreeNode *current = tree->root;
+    while (current) {
+        while (current->left) {
+            stack_push(stack, current);
+            current = current->left;
+        }
+
+        while (stack_not_empty(stack) != 0) {
+            current = stack_pop(stack);
+            //printf(current)
+            if (current->right) {
+                break;
+            }
+        }
     }
 
     return TREE_OK;
