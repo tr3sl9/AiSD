@@ -15,7 +15,7 @@ BST *create_tree() {
     return tree;
 }
 
-TreeNode *create_tree_node(const size_t key, const Info * const info) {
+TreeNode *create_tree_node(const size_t key, Info * const info) {
     TreeNode *node = (TreeNode*)calloc(1, sizeof(TreeNode));
     if (!node) {
         return NULL;
@@ -23,23 +23,17 @@ TreeNode *create_tree_node(const size_t key, const Info * const info) {
 
     node->key = key;
     if (!node->key) {
-        free_node(node);
+        free(node);
         return NULL;
     }
     
     node->info = info;
     if(!node->info) {
-        free_node(node);
+        free(node);
         return NULL;
     }
 
     return node;
-}
-
-void free_key_and_info(TreeNode * const node) {
-    free(node->key);
-    info_free(node->info);
-    return;
 }
 
 void free_tree(BST * const tree) {
@@ -70,9 +64,9 @@ void free_tree(BST * const tree) {
     return;
 }
 
-void set_key_and_info(TreeNode * const node, const size_t key, const Info * const info) {
+void set_key_and_info(TreeNode * const node, const size_t key, Info * const info) {
     if (!node || !key || !info) {
-        return TREE_VAL;
+        return;
     }
 
     node->key = key;
@@ -103,8 +97,8 @@ TreeNode *find_tree(const BST * const tree, const size_t key) {
     return current;
 }
 
-TreeNode *find_release_tree(const TreeNode * const current, const size_t key, const size_t release) {
-    if (!tree) {
+TreeNode *find_release_tree(TreeNode * current, const size_t key, const size_t release) {
+    if (!current) {
         return NULL;
     }
     if (!key) {
@@ -150,7 +144,7 @@ TreeNode *special_find_tree(const BST * const tree, const size_t key) {
     return current;
 }
 
-tree_err insert_tree(BST * const tree, const size_t key, const Info * const info) {
+tree_err insert_tree(BST * const tree, const size_t key, Info * const info) {
     if (!tree) {
         return TREE_NULL;
     }
@@ -170,7 +164,7 @@ tree_err insert_tree(BST * const tree, const size_t key, const Info * const info
     }
     TreeNode *current_parent = NULL;
 
-    while (!cur) {
+    while (!current) {
         current_parent = current;
         if (key > current->key) {
             current = current->right;
@@ -224,7 +218,7 @@ tree_err delete_tree(BST * const tree, const size_t key) {
         TreeNode *child = current->right;
         TreeNode *child_parrent = current;
         while (child->left) {
-            child_parent = child;
+            child_parrent = child;
             child = child->left;
         }
         free_key_and_info(current);
@@ -255,7 +249,7 @@ tree_err walk_tree(const BST * const tree) {
         return TREE_NULL;
     }
     
-    Stack *stack = stack_create(tree->size);
+    Stack *stack = stack_create();
     if (!stack) {
         return TREE_VAL;
     }

@@ -10,22 +10,23 @@ typedef enum {
     STACK_FULL = 1, 
     STACK_NULL = 2,
     STACK_EMPTY = 3, 
-    STACK_MEM = 4
+    STACK_MEM = 4,
+    STACK_VAL = 5
 } stack_err;
 
-typedef struct {
+
+typedef struct StackNode {
     TreeNode *tree_node;
     struct StackNode *next;
 } StackNode;
 
 typedef struct {
     StackNode *top;
-    size_t size;
 } Stack;
 
 Stack *stack_create(void);
-stack_err stack_push(Stack * const, const TreeNode * const);
-StackNode *stack_pop(Stack * const);
+stack_err stack_push(Stack * const, TreeNode * const);
+TreeNode *stack_pop(Stack * const);
 
 void stack_free(Stack * const);
 

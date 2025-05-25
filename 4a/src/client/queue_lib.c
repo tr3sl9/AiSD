@@ -2,6 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../lib//bst_lib.h"
+#include "queue_lib.h"
+
 queue_err queue_push(Queue * const queue, TreeNode * const node) {
     if (!queue || !queue->data) {
         return QUEUE_NULL;

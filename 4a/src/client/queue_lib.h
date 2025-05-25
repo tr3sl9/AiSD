@@ -22,7 +22,7 @@ typedef enum {
     QUEUE_MEM = 4
 } queue_err;
 
-Queue* create_queue(const size_t capacity);
+Queue* queue_create(const size_t capacity);
 queue_err queue_push(Queue * const, TreeNode * const);
 TreeNode *queue_pop(Queue * const);
 TreeNode *queue_peak(const Queue * const);
