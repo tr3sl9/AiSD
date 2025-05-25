@@ -17,7 +17,9 @@ typedef struct {
 typedef enum {
     QUEUE_OK = 0,
     QUEUE_NULL = 1,
-    QUEUE_FULL = 2
+    QUEUE_FULL = 2,
+    QUEUE_EMPTY = 3,
+    QUEUE_MEM = 4
 } queue_err;
 
 Queue* create_queue(const size_t capacity);
