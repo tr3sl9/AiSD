@@ -17,7 +17,7 @@ int main(void) {
     while (!end_program) {
         show_menu();
         size_t choice;
-        if (read_number(&choice, 1, COUNT_OP, PROMPT_FOR_OPERATION) == TREE_EOF) {
+        if (read_number(&choice, 0, 8, PROMPT_FOR_OPERATION) == TREE_EOF) {
             free_tree(tree);
             return 1;
         }
