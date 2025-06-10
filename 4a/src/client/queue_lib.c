@@ -6,66 +6,66 @@
 #include "queue_lib.h"
 
 queue_err queue_push(Queue * const queue, TreeNode * const node) {
-    if (!queue || !queue->data) {
+    if (!queue || !node) {
         return QUEUE_NULL;
     }
-    if (queue->capacity == queue->size) {
-        return QUEUE_FULL;
+
+    QueueNode* new_node = (QueueNode*)malloc(sizeof(QueueNode));
+    if (!new_node) {
+        return QUEUE_MEM;
     }
 
-    queue->data[queue->back] = node;
-    queue->back++;
-    queue->size++;
+    new_node->tree_node = node;
+    new_node->next = NULL;
+
+    if (queue->back) {
+        queue->back->next = new_node;
+    } else {
+        queue->front = new_node;
+    }
+    queue->back = new_node;
 
     return QUEUE_OK;
 }
 
-Queue *queue_create(const size_t capacity) {
-    if (!capacity) {
-        return NULL;
-    }
-
+Queue *queue_create(void) {
     Queue *queue = (Queue*)calloc(1, sizeof(Queue));
-    if (!queue) {
-        return NULL;
-    }
-
-    queue->data = (TreeNode**)calloc(capacity, sizeof(TreeNode*));
-    if (!queue->data) {
-        free(queue);
-        return NULL;
-    }
-
-    queue->capacity = capacity;
     return queue;
 }
 
 TreeNode *queue_pop(Queue * const queue) {
-    if (!queue || !queue->data) {
+    if (!queue) {
         return NULL;
     }
 
-    TreeNode *node = queue->data[queue->front];
-    queue->front = (queue->front + 1) % queue->capacity;
-    queue->size--;
+    QueueNode* front_node = queue->front;
+    TreeNode* node = front_node->tree_node;
 
+    queue->front = front_node->next;
+    if (!queue->front) {
+        queue->back = NULL;
+    }
+
+    free(front_node);
     return node;
 }
 
-TreeNode *queue_peak(const Queue * const queue) {
-    if (!queue || !queue->data) {
+TreeNode *queue_peek(const Queue * const queue) {
+    if (!queue) {
         return NULL;
     }
 
-    return queue->data[queue->front];
+    return queue->front->tree_node;
 }
 
-void queue_free(Queue * const queue) {
-    free(queue->data);
+void queue_free(Queue* queue) {
+    QueueNode* current = queue->front;
+    while (current) {
+        QueueNode* next = current->next;
+        free(current);
+        current = next;
+    }
+
     free(queue);
     return;
-}
-
-char queue_not_empty(const Queue * const queue) {
-    return queue->size != 0;
 }
