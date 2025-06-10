@@ -41,8 +41,7 @@ tree_err dialog_delete(BST * const tree) {
     return delete_tree(tree, key);
 }
 
-static search_key_release(const TreeNode * const node, size_t * const release) { 
-    size_t release = 1;
+static tree_err search_key_release(TreeNode * const node, size_t * const release) { 
     if ((node->left && node->key == node->left->key)) {
         printf("The element with this key is not the only one. Specify release");
         
@@ -50,8 +49,8 @@ static search_key_release(const TreeNode * const node, size_t * const release) {
             return TREE_EOF;
         }
 
-        node = find_release_tree(node, node->key, *release);
-        if (!node) {
+        TreeNode *release_node = find_release_tree(node, node->key, *release);
+        if (!release_node) {
             return TREE_VAL;
         }
 
@@ -129,7 +128,7 @@ tree_err dialog_special_find(BST * const tree) {
 }
 
 tree_err dialog_walk(BST * const tree) {
-    return walk_tree(tree);
+    return traverse_tree(tree);
 }
 
 tree_err dialog_export(BST * const tree) {

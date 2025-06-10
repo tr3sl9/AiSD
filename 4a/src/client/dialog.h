@@ -2,7 +2,7 @@
 #define DIALOG_H
 #include "../lib/bst_lib.h"
 
-typedef tree_err (*functions)(struct BST*);
+typedef tree_err (*functions)(BST*);
 
 typedef struct {
     functions func;
