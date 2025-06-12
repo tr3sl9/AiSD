@@ -1,5 +1,5 @@
 CFLAGS=-g -Wall -Wextra -Werror -Wpedantic -Wno-implicit-fallthrough
-LDFLAGS=-lreadline
+LDFLAGS=-lreadline `pkg-config libgvc libcgraph --libs`
 CC=gcc
 OBJ_CLIENT=obj/client
 OBJ_LIB=obj/lib
@@ -16,7 +16,7 @@ OBJECTS_LIB=$(patsubst $(SRC_LIB)/%.c,$(OBJ_LIB)/%.o,$(SOURCES_LIB))
 
 $(TARGET): $(OBJECTS_CLIENT) $(LIB_TARGET)
 	@mkdir -p $(dir $@)
-	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)  
 
 $(LIB_TARGET): $(OBJECTS_LIB)
 	@mkdir -p $(dir $@)

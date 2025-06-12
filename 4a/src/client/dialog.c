@@ -11,7 +11,7 @@
 #define PROMPT_FOR_RELEASE "Enter release: "
 #define COUNT_OP sizeof(operations) / sizeof(operation)
 
-tree_err dialog_insert(BST * const tree) {
+static tree_err dialog_insert(BST * const tree) {
     size_t key, info;
     if (read_positive_number(&key, PROMPT_FOR_KEY) == TREE_EOF) {
         return TREE_EOF;
@@ -28,7 +28,7 @@ tree_err dialog_insert(BST * const tree) {
     return insert_tree(tree, key, info_ptr);
 }
 
-tree_err dialog_delete(BST * const tree) {
+static tree_err dialog_delete(BST * const tree) {
     if (!tree->root) {
         return TREE_EMPTY;
     }
@@ -59,7 +59,7 @@ static tree_err search_key_release(TreeNode * const node, size_t * const release
     return TREE_OK;
 }
 
-tree_err dialog_find(BST * const tree) {
+static tree_err dialog_find(BST * const tree) {
     if (!tree) {
         return TREE_NULL;
     }
@@ -73,7 +73,7 @@ tree_err dialog_find(BST * const tree) {
     }
 
     TreeNode *node = find_tree(tree, key);
-    if (!node) {
+    if (!node || node->key != key) {
         return TREE_VAL;
     }
 
@@ -93,7 +93,7 @@ tree_err dialog_find(BST * const tree) {
     return TREE_OK;
 }
 
-tree_err dialog_special_find(BST * const tree) {
+static tree_err dialog_special_find(BST * const tree) {
     if (!tree) {
         return TREE_NULL;
     }
@@ -127,18 +127,30 @@ tree_err dialog_special_find(BST * const tree) {
     return TREE_OK;
 }
 
-tree_err dialog_walk(BST * const tree) {
+static tree_err dialog_traverse(BST * const tree) {
     return traverse_tree(tree);
 }
 
-tree_err dialog_export(BST * const tree) {
+static tree_err dialog_export_svg(BST * const tree) {
     char *filename = readline(PROMPT_FOR_FILE);
     if (!filename) {
         free(filename);
         return TREE_EOF;
     }
 
-    tree_err err = bst_export(tree, filename);
+    tree_err err = export_tree_svg(tree, filename);
+    free(filename);
+    return err;
+}
+
+static tree_err dialog_export_txt(BST * const tree) {
+    char *filename = readline(PROMPT_FOR_FILE);
+    if (!filename) {
+        free(filename);
+        return TREE_EOF;
+    }
+
+    tree_err err = export_tree_txt(tree, filename);
     free(filename);
     return err;
 }
@@ -147,13 +159,31 @@ static tree_err dialog_exit(__attribute__((__unused__)) BST * const tree) {
     return TREE_EXIT;
 }
 
+static tree_err dialog_import(BST * const tree) {
+    char *filename = readline(PROMPT_FOR_FILE);
+    if (!filename) {
+        free(filename);
+        return TREE_EOF;
+    }
+    tree_err err = import_tree(tree, filename);
+    free(filename);
+    return err;
+}
+
+static tree_err dialog_print(BST * const tree) {
+    return print_tree(tree);
+}
+
 const operation operations[] = {
     {dialog_insert, "Insert element"},
     {dialog_delete, "Delete by key"},
     {dialog_find, "Search by key"},
     {dialog_special_find, "Special search"},
-    {dialog_walk, "Print tree"},
-    {dialog_export, "Export tree to file"},
+    {dialog_traverse, "Traverse tree"},
+    {dialog_export_svg, "Export tree to file .svg"},
+    {dialog_export_txt, "Export tree to file .txt"},
+    {dialog_import, "Impport tree from file .txt"},
+    {dialog_print, "Print tree"},
     {dialog_exit, "EXIT"}
 };
 

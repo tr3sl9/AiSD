@@ -26,4 +26,25 @@ void info_print(const Info * const info) {
 void info_free(Info * const info) {
     free(info);
     return;
-}    
+}
+
+char info_read(Info * const info, FILE * const file) {
+    if (!info) {
+        return 0;
+    }
+
+    if (fscanf(file, "%zu\n", &info->info) != 1) {
+        return 0;
+    }
+
+    return 1;
+}
+
+void info_print_file(const Info * const info, FILE * const file) {
+    if (!info) {
+        return;
+    }
+
+    fprintf(file, "%zu", info->info);
+    return;
+}

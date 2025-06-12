@@ -10,7 +10,12 @@ typedef enum {
     TREE_EMPTY = 1,
     TREE_NULL = 2,
     TREE_MEM = 3,
-    TREE_VAL = 4
+    TREE_VAL = 4,
+    TREE_MAGIC_WORD = 5,
+    TREE_SIZE = 6,
+    FILE_ERR = 7,
+    TREE_EOF = -1,
+    TREE_EXIT = -2
 } tree_err;
 
 typedef struct TreeNode {
@@ -23,8 +28,13 @@ typedef struct TreeNode {
 
 typedef struct {
     TreeNode *root;
-    size_t size;
 } BST;
+
+typedef struct {
+    TreeNode *node;
+    int level;
+    int is_last;
+} TreePrintFrame;
 
 BST *create_tree();
 
@@ -35,9 +45,13 @@ TreeNode *special_find_tree(const BST * const, const size_t key);
 
 tree_err insert_tree(BST * const, const size_t key, Info * const info);
 tree_err delete_tree(BST * const, const size_t key);
-tree_err walk_tree(const BST * const);
+tree_err import_tree(BST * const, const char * filename);
+tree_err traverse_tree(const BST * const);
+tree_err export_tree_svg(const BST * const, const char * const filename);
+tree_err export_tree_txt(const BST * const, const char * const filename);
+tree_err print_tree(const BST * const);
 
-void free_key_and_info(TreeNode * const);
+void free_info(TreeNode * const);
 void free_tree(BST * const);
 void set_key_and_info(TreeNode * const, const size_t key, Info * const info);
 
