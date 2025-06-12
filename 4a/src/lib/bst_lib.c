@@ -20,7 +20,7 @@ BST *create_tree() {
 }
 
 TreeNode *go_to_leaf(const BST * const tree, const size_t key) {
-    if (!tree) {
+    if (!tree || !tree->root) {
         return NULL;
     }
     if (!key) {
@@ -73,35 +73,63 @@ void free_info(TreeNode * const node) {
 }
 
 void free_tree(BST * const tree) {
-    if (!tree->root || !tree->root) {
+    if (!tree) {
+        return;
+    }
+
+    if (!tree->root) {
+        free(tree);
         return;
     }
 
     Queue *queue = queue_create();
     if (!queue) {
+        free(tree);
         return;
     }
 
     if (queue_push(queue, tree->root) != QUEUE_OK) {
+        queue_free(queue);
+        free(tree);
         return;
     }
 
     while (queue->front) {
         TreeNode *node = queue_pop(queue);
-        if (!node->left) {
-            queue_push(queue, node->left);
+        if (node->left) {
+            if (queue_push(queue, node->left) != QUEUE_OK) {
+                free_info(node);
+                free(node);
+                while (queue->front) {
+                    TreeNode *temp = queue_pop(queue);
+                    free_info(temp);
+                    free(temp);
+                }
+                queue_free(queue);
+                free(tree);
+                return;
+            }
         }
-        if (!node->right) {
-            queue_push(queue, node->right);
+        if (node->right) {
+            if (queue_push(queue, node->right) != QUEUE_OK) {
+                free_info(node);
+                free(node);
+                while (queue->front) {
+                    TreeNode *temp = queue_pop(queue);
+                    free_info(temp);
+                    free(temp);
+                }
+                queue_free(queue);
+                free(tree);
+                return;
+            }
         }
-        
         free_info(node);
         free(node);
     }
 
     queue_free(queue);
     free(tree);
-    return;
 }
 
 void set_key_and_info(TreeNode * const node, const size_t key, Info * const info) {
@@ -263,7 +291,7 @@ tree_err delete_tree(BST * const tree, const size_t key) {
     }
 
     TreeNode *current = go_to_leaf(tree, key);
-    if (!current) {
+    if (!current || current->key != key) {
         return TREE_VAL;
     }
 

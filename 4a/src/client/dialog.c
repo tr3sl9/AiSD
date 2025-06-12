@@ -21,11 +21,22 @@ static tree_err dialog_insert(BST * const tree) {
     }
 
     Info *info_ptr = info_create();
+    tree_err result = TREE_OK;
     if (!info_ptr || !info_insert(info_ptr, info)) {
-        info_free(info_ptr);
-        return TREE_MEM;
+        result = TREE_MEM;
+        goto exit_with_err;
     }
-    return insert_tree(tree, key, info_ptr);
+
+    result = insert_tree(tree, key, info_ptr);
+    if (result != TREE_OK) {
+        goto exit_with_err;
+    }
+    
+    goto exit_with_err;
+    
+exit_with_err:
+    info_free(info_ptr);
+    return result;
 }
 
 static tree_err dialog_delete(BST * const tree) {
