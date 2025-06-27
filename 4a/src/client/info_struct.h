@@ -5,9 +5,8 @@ typedef struct {
     size_t info;
 } Info;
 
-Info *info_create(void);
+Info *info_create(const size_t number);
 
-char info_insert(Info * const, const size_t number);
 char info_read(Info * const, FILE * const file);
 
 void info_print(const Info * const);

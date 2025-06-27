@@ -3,17 +3,15 @@
 #include <string.h>
 #include "info_struct.h"
 
-Info *info_create(void) {
-    return (Info*)calloc(1, sizeof(Info));
-} 
-
-char info_insert(Info * const info, const size_t number) {
+Info *info_create(const size_t number) {
+    Info *info = (Info*)calloc(1, sizeof(Info));
     if (!info) {
-        return 0;
+        return NULL;
     }
+
     info->info = number;
-    return 1;
-}
+    return info;
+} 
 
 void info_print(const Info * const info) {
     if (!info) {
