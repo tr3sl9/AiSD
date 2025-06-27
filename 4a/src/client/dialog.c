@@ -20,9 +20,9 @@ static tree_err dialog_insert(BST * const tree) {
         return TREE_EOF;
     }
 
-    Info *info_ptr = info_create();
+    Info *info_ptr = info_create(info);
     tree_err result = TREE_OK;
-    if (!info_ptr || !info_insert(info_ptr, info)) {
+    if (!info_ptr) {
         result = TREE_MEM;
         goto exit_with_err;
     }
