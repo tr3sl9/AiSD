@@ -31,4 +31,6 @@ TreeNode *queue_peak(const Queue * const);
 
 void queue_free(Queue * const);
 
+char queue_not_empty(const Queue * const);
+
 #endif 

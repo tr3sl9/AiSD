@@ -51,7 +51,7 @@ TreeNode *queue_pop(Queue * const queue) {
 }
 
 TreeNode *queue_peek(const Queue * const queue) {
-    if (!queue) {
+    if (!queue || !queue->front) {
         return NULL;
     }
 
@@ -68,4 +68,8 @@ void queue_free(Queue* queue) {
 
     free(queue);
     return;
+}
+
+char queue_not_empty(const Queue * const queue) {
+    return queue_peek(queue) != NULL;
 }
