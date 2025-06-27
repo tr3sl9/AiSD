@@ -19,7 +19,7 @@ BST *create_tree() {
     return (BST*)calloc(1, sizeof(BST));
 }
 
-TreeNode *go_to_leaf(const BST * const tree, const size_t key) {
+static TreeNode *go_to_node(const BST * const tree, const size_t key) {
     if (!tree || !tree->root) {
         return NULL;
     }
@@ -40,7 +40,26 @@ TreeNode *go_to_leaf(const BST * const tree, const size_t key) {
     return current_parent;
 }
 
-TreeNode *create_tree_node(const size_t key, Info * const info) {
+static TreeNode *go_to_leaf(const BST * const tree, const size_t key) {
+    if (!tree || !tree->root) {
+        return NULL;
+    }
+    if (!key) {
+        return NULL;
+    }
+    
+    TreeNode *current_parent = NULL;
+    TreeNode *current = tree->root;
+    while (current) {
+        current_parent = current;
+        current = key > current->key ? current->right : current->left;
+    }
+
+    return current_parent;
+
+}
+
+static TreeNode *create_tree_node(const size_t key, Info * const info) {
     if (!info) {
         return NULL;
     }
@@ -51,17 +70,11 @@ TreeNode *create_tree_node(const size_t key, Info * const info) {
     }
 
     node->key = key;
-    if (!node->key) {
-        free(node);
-        return NULL;
-    }
-    
-    node->info = info_create();
+    node->info = info_create(info->info);
     if(!node->info) {
         free(node);
         return NULL;
     }
-    info_insert(node->info, info->info);
 
     return node;
 }
@@ -73,12 +86,7 @@ void free_info(TreeNode * const node) {
 }
 
 void free_tree(BST * const tree) {
-    if (!tree) {
-        return;
-    }
-
-    if (!tree->root) {
-        free(tree);
+    if (!tree || !tree->root) {
         return;
     }
 
@@ -94,42 +102,23 @@ void free_tree(BST * const tree) {
         return;
     }
 
-    while (queue->front) {
+    while (queue_not_empty(queue)) {
         TreeNode *node = queue_pop(queue);
+
         if (node->left) {
-            if (queue_push(queue, node->left) != QUEUE_OK) {
-                free_info(node);
-                free(node);
-                while (queue->front) {
-                    TreeNode *temp = queue_pop(queue);
-                    free_info(temp);
-                    free(temp);
-                }
-                queue_free(queue);
-                free(tree);
-                return;
-            }
+            queue_push(queue, node->left);
         }
         if (node->right) {
-            if (queue_push(queue, node->right) != QUEUE_OK) {
-                free_info(node);
-                free(node);
-                while (queue->front) {
-                    TreeNode *temp = queue_pop(queue);
-                    free_info(temp);
-                    free(temp);
-                }
-                queue_free(queue);
-                free(tree);
-                return;
-            }
+            queue_push(queue, node->right);
         }
+        
         free_info(node);
         free(node);
     }
 
     queue_free(queue);
     free(tree);
+    return;
 }
 
 void set_key_and_info(TreeNode * const node, const size_t key, Info * const info) {
@@ -174,7 +163,7 @@ TreeNode *find_tree(const BST * const tree, const size_t key) {
         return NULL;
     }
 
-    return go_to_leaf(tree, key);
+    return go_to_node(tree, key);
 }
 
 TreeNode *find_release_tree(TreeNode * current, const size_t key, const size_t release) {
@@ -235,13 +224,7 @@ tree_err insert_tree(BST * const tree, const size_t key, Info * const info) {
 }
 
 static int child_count(TreeNode * const current) {
-    if (current->left && current->right) {
-        return 2;
-    }
-    if (current->left || current->right) {
-        return 1;
-    }
-    return 0;
+    return (current->left != NULL) + (current->right != NULL);
 }
 
 static void child_reattachment(BST * const tree, TreeNode * const current) {
@@ -290,7 +273,7 @@ tree_err delete_tree(BST * const tree, const size_t key) {
         return TREE_VAL;
     }
 
-    TreeNode *current = go_to_leaf(tree, key);
+    TreeNode *current = go_to_node(tree, key);
     if (!current || current->key != key) {
         return TREE_VAL;
     }
@@ -379,31 +362,26 @@ tree_err export_tree_svg(const BST * const tree, const char * const filename) {
     return TREE_OK;
 }
 
-static void print_node(TreeNode *node, int level, int is_last) {
-    if (!node) {
-        return;
-    }
+static void print_node(const TreeNode *node, const char *prefix, char is_left) {
+    if (node == NULL) return;
 
-    for (int i = 0; i < level; i++) {
-        printf(i == level - 1 ? (is_last ? "└── " : "├── ") : "│   ");
-    }
-
+    printf("%s", prefix);
+    printf(is_left ? "├── " : "└── ");
     printf("%zu\n", node->key);
-    print_node(node->left, level + 1, !node->right);
-    print_node(node->right, level + 1, 1);
 
-    return;
+    char new_prefix[256];
+    snprintf(new_prefix, sizeof(new_prefix), "%s%s", prefix, is_left ? "│   " : "    ");
+
+    print_node(node->right, new_prefix, 1);
+    print_node(node->left, new_prefix, 0);
 }
 
-tree_err print_tree(const BST * const tree) {
-    if (!tree) {
-        return TREE_NULL;
-    }
-    if (!tree->root) {
+tree_err print_tree(const BST *tree) {
+    if (!tree || !tree->root) {
         return TREE_EMPTY;
     }
-    print_node(tree->root, 0, 1);
-
+    
+    print_node(tree->root, "", 0);
     return TREE_OK;
 }
 
@@ -420,7 +398,7 @@ static tree_err check_magic_word(FILE * const file) {
 
 static tree_err read_node(BST * const tree, FILE * const file) {
     size_t key;
-    Info *info = info_create();
+    Info *info = info_create(1);
     
     tree_err result = TREE_OK;
     if (fscanf(file, "%zu\n", &key) != 1) {
@@ -458,13 +436,8 @@ tree_err import_tree(BST * const tree, const char * const filename) {
         result = TREE_MAGIC_WORD;
         goto exit_with_err;
     }
-
-    while (1) {
-        if (read_node(tree, file) != TREE_OK) {
-            result = TREE_VAL;
-            goto exit_with_err;
-        }
-    }
+    while (read_node(tree, file) != TREE_OK);
+    result = TREE_VAL;
 
     goto exit_with_err;
 

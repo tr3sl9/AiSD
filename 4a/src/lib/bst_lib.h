@@ -38,7 +38,6 @@ typedef struct {
 
 BST *create_tree();
 
-TreeNode *create_tree_node(const size_t key, Info * const info);
 TreeNode *find_tree(const BST * const, const size_t key);
 TreeNode *find_release_tree(TreeNode *, const size_t key, const size_t release);
 TreeNode *special_find_tree(const BST * const, const size_t key);
