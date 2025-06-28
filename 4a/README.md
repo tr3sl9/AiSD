@@ -39,5 +39,5 @@ make bst
 ```
 valgrind ./bst 
 # or
-./table
+./bst
 ```
