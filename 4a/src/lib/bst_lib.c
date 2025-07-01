@@ -362,18 +362,29 @@ tree_err export_tree_svg(const BST * const tree, const char * const filename) {
     return TREE_OK;
 }
 
-static void print_node(const TreeNode *node, const char *prefix, char is_left) {
+static void print_node(const TreeNode * const node, const char * const prefix, const char has_brother) {
     if (node == NULL) return;
 
     printf("%s", prefix);
-    printf(is_left ? "├── " : "└── ");
+    printf(has_brother ? "├── " : "└── ");
     printf("%zu\n", node->key);
+    
+    size_t new_len_prefix = strlen(prefix) + 7;
+    char *new_prefix = malloc(new_len_prefix);
+    snprintf(new_prefix, new_len_prefix, "%s%s", prefix, has_brother ? "│   " : "    ");
 
-    char new_prefix[256];
-    snprintf(new_prefix, sizeof(new_prefix), "%s%s", prefix, is_left ? "│   " : "    ");
+    char right_has_brother = node->left != NULL;
+    char left_has_brother = 0;
 
-    print_node(node->right, new_prefix, 1);
-    print_node(node->left, new_prefix, 0);
+    if (node->right) {
+        print_node(node->right, new_prefix, right_has_brother);
+    }
+    if (node->left) {
+        print_node(node->left, new_prefix, left_has_brother);
+    }
+
+    free(new_prefix);
+    return;
 }
 
 tree_err print_tree(const BST *tree) {
@@ -479,3 +490,5 @@ tree_err export_tree_txt(const BST * const tree, const char * const filename) {
 
     return TREE_OK;
 }
+
+
