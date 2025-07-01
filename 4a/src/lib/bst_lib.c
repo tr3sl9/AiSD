@@ -465,7 +465,7 @@ tree_err export_tree_txt(const BST * const tree, const char * const filename) {
     
     Stack *stack = stack_create();
     if (!stack) {
-        fclosef(file);
+        fclose(file);
         return TREE_VAL;
     }
 
