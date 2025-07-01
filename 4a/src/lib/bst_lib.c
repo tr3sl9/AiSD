@@ -339,7 +339,7 @@ tree_err export_tree_svg(const BST * const tree, const char * const filename) {
     if (!tree || !tree->root) {
         return TREE_EMPTY;
     }
-
+/*
     char *ext = strrchr(filename, '.');
     char full_filename[256];
 
@@ -349,12 +349,12 @@ tree_err export_tree_svg(const BST * const tree, const char * const filename) {
     } else {
         snprintf(full_filename, sizeof(full_filename), "%s.svg", filename);
     }
-
+*/
     GVC_t *gvc = gvContext();
     Agraph_t *g = agopen("bst", Agdirected, NULL);
     add_nodes_edges(g, tree->root, NULL);
     gvLayout(gvc, g, "dot");
-    gvRenderFilename(gvc, g, "svg", full_filename);
+    gvRenderFilename(gvc, g, "svg", filename);
     gvFreeLayout(gvc, g);
     agclose(g);
     gvFreeContext(gvc);
@@ -447,7 +447,7 @@ tree_err import_tree(BST * const tree, const char * const filename) {
         result = TREE_MAGIC_WORD;
         goto exit_with_err;
     }
-    while (read_node(tree, file) != TREE_OK);
+    while (read_node(tree, file) == TREE_OK);
     result = TREE_VAL;
 
     goto exit_with_err;
