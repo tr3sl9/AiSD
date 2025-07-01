@@ -462,13 +462,14 @@ tree_err export_tree_txt(const BST * const tree, const char * const filename) {
     if (!file) {
         return FILE_ERR;
     }
-
-    fprintf(file, "%s", MAGIC_WORD);
     
     Stack *stack = stack_create();
     if (!stack) {
+        fclosef(file);
         return TREE_VAL;
     }
+
+    fprintf(file, "%s", MAGIC_WORD);
 
     TreeNode *current = tree->root;
     while (current || stack_not_empty(stack)) {
