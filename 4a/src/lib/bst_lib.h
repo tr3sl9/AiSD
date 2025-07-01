@@ -30,12 +30,6 @@ typedef struct {
     TreeNode *root;
 } BST;
 
-typedef struct {
-    TreeNode *node;
-    int level;
-    int is_last;
-} TreePrintFrame;
-
 BST *create_tree();
 
 TreeNode *find_tree(const BST * const, const size_t key);
