@@ -7,6 +7,7 @@ SRC_CLIENT=src/client
 SRC_LIB=src/lib
 LIB_TARGET=libbst.a
 TARGET=bst
+GEN_TARGET=generate_test
 
 SOURCES_CLIENT=$(wildcard $(SRC_CLIENT)/*.c)
 OBJECTS_CLIENT=$(patsubst $(SRC_CLIENT)/%.c,$(OBJ_CLIENT)/%.o,$(SOURCES_CLIENT))
@@ -22,9 +23,14 @@ $(LIB_TARGET): $(OBJECTS_LIB)
 	@mkdir -p $(dir $@)
 	ar rcs $@ $^
 
+$(GEN_TARGET): $(OBJ_CLIENT)/generate_test.o
+	@mkdir -p $(dir $@)
+	$(CC) -o $@ $^ $(CFLAGS)
+
 clean:
 	rm -fr obj
 	rm -fv $(TARGET)
+	rm -fv $(GEN_TARGET)
 	rm -fv $(LIB_TARGET)
 
 $(OBJ_CLIENT)/%.o: $(SRC_CLIENT)/%.c
