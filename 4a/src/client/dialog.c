@@ -35,7 +35,6 @@ static tree_err dialog_insert(BST * const tree) {
     goto exit_with_err;
     
 exit_with_err:
-    info_free(info_ptr);
     return result;
 }
 
