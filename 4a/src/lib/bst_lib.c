@@ -70,7 +70,7 @@ static TreeNode *create_tree_node(const size_t key, Info * const info) {
     }
 
     node->key = key;
-    node->info = info_create(info->info);
+    node->info = info;
     if(!node->info) {
         free(node);
         return NULL;
