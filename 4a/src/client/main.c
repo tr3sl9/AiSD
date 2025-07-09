@@ -28,3 +28,4 @@ int main(void) {
     free_tree(tree);
     return 0;
 }
+
