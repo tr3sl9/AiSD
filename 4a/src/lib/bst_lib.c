@@ -86,7 +86,7 @@ void free_info(TreeNode * const node) {
 }
 
 void free_tree(BST * const tree) {
-    if (!tree || !tree->root) {
+    if (!tree) {
         return;
     }
 
@@ -233,22 +233,37 @@ static void child_reattachment(BST * const tree, TreeNode * const current) {
     TreeNode *child = NULL;
     TreeNode *child_parrent = NULL;
     switch (count) {
-        case 2: 
+        case 2: {
             child = current->right;
             child_parrent = current;
             while (child->left) {
                 child_parrent = child;
                 child = child->left;
             }
+            size_t min_key = child->key;
+            Info *min_info = info_create(child->info->info);
             free_info(current);
-            set_key_and_info(current, child->key, child->info);
-            child_parrent->left = child->right;
+            set_key_and_info(current, min_key, min_info);
+            if (child_parrent->left == child) {
+                child_parrent->left = child->right;
+                if (child->right) {
+                    child->right->parent = child_parrent;
+                }
+            } else {
+                child_parrent->right = child->right;
+                if (child->right) {
+                    child->right->parent = child_parrent;
+                }
+            }
+            free_info(child);
             free(child);
             break;
+        }
         case 1:
         case 0:
             free_info(current);
             child = (current->left) ? current->left : current->right;
+            if (child) child->parent = current_parent;
             if (current_parent) {
                 if (current_parent->left == current) {
                     current_parent->left = child;
@@ -491,5 +506,3 @@ tree_err export_tree_txt(const BST * const tree, const char * const filename) {
 
     return TREE_OK;
 }
-
-
