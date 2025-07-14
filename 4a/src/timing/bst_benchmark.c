@@ -10,7 +10,7 @@
 
 #define NANO 1000000000
 #define DEF_COUNT_KEYS 40000
-#define ITER_COUNT_KEYS 10000
+#define ITER_COUNT_KEYS 1000
 
 double time_delta(const struct timespec *start, const struct timespec *end) {
     return end->tv_sec * NANO + end->tv_nsec - start->tv_sec * NANO - start->tv_nsec;
@@ -78,7 +78,7 @@ int main() {
             free(keys);
         }
         // Записать средние значения по размеру дерева
-        fprintf(file, "%zu;%.6f;%.6f;%.6f\n", (s + 1) * DEF_COUNT_KEYS, time_insert/NUM_ITER, time_search/NUM_ITER, time_delete/NUM_ITER);
+        fprintf(file, "%zu;%.6f;%.6f;%.6f\n", (s + 1) * DEF_COUNT_KEYS, time_insert/(double)NUM_ITER, time_search/(double)NUM_ITER, time_delete/(double)NUM_ITER);
         printf("Тестирование для дерева с %zu ключами завершено.\n", (s + 1) * DEF_COUNT_KEYS);
     }
     

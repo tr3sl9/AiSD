@@ -28,7 +28,7 @@ static tree_err dialog_insert(BST * const tree) {
     }
 
     result = insert_tree(tree, key, info_ptr);
-    if (result != TREE_OK) {
+   if (result != TREE_OK) {
         goto exit_with_err;
     }
     
@@ -51,22 +51,25 @@ static tree_err dialog_delete(BST * const tree) {
     return delete_tree(tree, key);
 }
 
-static tree_err search_key_release(TreeNode * const node, size_t * const release) { 
-    if ((node->left && node->key == node->left->key)) {
-        printf("The element with this key is not the only one. Specify release");
+static TreeNode *search_key_release(TreeNode * const node, size_t * const release) {
+    TreeNode *release_node = NULL;
+    if (go_to_node(node->left, node->key) != NULL) {
+        printf("The element with this key is not the only one. Specify release\n");
         
         if (read_positive_number(release, PROMPT_FOR_RELEASE) == TREE_EOF) {
-            return TREE_EOF;
+            return NULL;
         }
 
-        TreeNode *release_node = find_release_tree(node, node->key, *release);
+        release_node = find_release_tree(node, node->key, *release);
         if (!release_node) {
-            return TREE_VAL;
+            return NULL;
         }
-
+    }
+    else {
+        *release = 1;
     }
     
-    return TREE_OK;
+    return release_node;
 }
 
 static tree_err dialog_find(BST * const tree) {
@@ -75,9 +78,9 @@ static tree_err dialog_find(BST * const tree) {
     }
     if (!tree->root) {
         return TREE_EMPTY;
-}
+    }
 
-    size_t key;
+    size_t key = 0;
     if (read_positive_number(&key, PROMPT_FOR_KEY) == TREE_EOF) {
         return TREE_EOF;
     }
@@ -88,16 +91,16 @@ static tree_err dialog_find(BST * const tree) {
     }
 
     size_t release = 1;
-    tree_err error = search_key_release(node, &release);
-    if (error != TREE_OK) {
-        return error;
+    TreeNode *release_node = search_key_release(node, &release);
+    if (!release_node) {
+        return TREE_VAL;
     }
 
     printf("\nFound element with key %zu, release %zu:\n", key, release);
     printf("┌──────────────────────┐\n");
     printf("│ Info                 │\n");
     printf("├──────────────────────┤\n");
-    printf("│ %-20zu │\n", node->info->info);
+    printf("│ %-20zu │\n", release_node->info->info);
     printf("└──────────────────────┘\n");
 
     return TREE_OK;
@@ -111,7 +114,7 @@ static tree_err dialog_special_find(BST * const tree) {
         return TREE_EMPTY;
     }
 
-    size_t key;
+    size_t key = 0;
     if (read_positive_number(&key, PROMPT_FOR_KEY) == TREE_EOF) {
         return TREE_EOF;
     }
@@ -120,18 +123,19 @@ static tree_err dialog_special_find(BST * const tree) {
     if (!node) {
         return TREE_VAL;
     }
-    
+
+    printf("\nFound element with key %zu with info %zu\nChecking if he's not the only one.\n", node->key, node->info->info);
     size_t release = 1;
-    tree_err error = search_key_release(node, &release);
-    if (error != TREE_OK) {
-        return error;
+    TreeNode *release_node = search_key_release(node, &release);
+    if (!release_node) {
+        return TREE_VAL;
     }
 
     printf("\nFound element with key %zu, release %zu:\n", node->key, release);
     printf("┌──────────────────────┐\n");
     printf("│ Info                 │\n");
     printf("├──────────────────────┤\n");
-    printf("│ %-20zu │\n", node->info->info);
+    printf("│ %-20zu │\n", release_node->info->info);
     printf("└──────────────────────┘\n");
 
     return TREE_OK;

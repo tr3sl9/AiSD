@@ -19,8 +19,8 @@ BST *create_tree() {
     return (BST*)calloc(1, sizeof(BST));
 }
 
-static TreeNode *go_to_node(const BST * const tree, const size_t key) {
-    if (!tree || !tree->root) {
+TreeNode *go_to_node(TreeNode * const node, const size_t key) {
+    if (!node) {
         return NULL;
     }
     if (!key) {
@@ -28,7 +28,7 @@ static TreeNode *go_to_node(const BST * const tree, const size_t key) {
     }
     
     TreeNode *current_parent = NULL;
-    TreeNode *current = tree->root;
+    TreeNode *current = node;
     while (current) {
         current_parent = current;
         if (key == current->key) {
@@ -36,12 +36,15 @@ static TreeNode *go_to_node(const BST * const tree, const size_t key) {
         }
         current = key > current->key ? current->right : current->left;
     }
-
+    
+    if (current_parent->key != key) {
+        return NULL;
+    }
     return current_parent;
 }
 
-static TreeNode *go_to_leaf(const BST * const tree, const size_t key) {
-    if (!tree || !tree->root) {
+static TreeNode *go_to_leaf(TreeNode * const node, const size_t key) {
+    if (!node) {
         return NULL;
     }
     if (!key) {
@@ -49,7 +52,7 @@ static TreeNode *go_to_leaf(const BST * const tree, const size_t key) {
     }
     
     TreeNode *current_parent = NULL;
-    TreeNode *current = tree->root;
+    TreeNode *current = node;
     while (current) {
         current_parent = current;
         current = key > current->key ? current->right : current->left;
@@ -86,7 +89,7 @@ void free_info(TreeNode * const node) {
 }
 
 void free_tree(BST * const tree) {
-    if (!tree) {
+    if (!tree || !tree->root) {
         return;
     }
 
@@ -121,7 +124,7 @@ void free_tree(BST * const tree) {
     return;
 }
 
-void set_key_and_info(TreeNode * const node, const size_t key, Info * const info) {
+static void set_key_and_info(TreeNode * const node, const size_t key, Info * const info) {
     if (!node || !key || !info) {
         return;
     }
@@ -135,35 +138,29 @@ TreeNode *special_find_tree(const BST * const tree, const size_t key) {
     if (!tree || !tree->root) {
         return NULL;
     }
-    if (!key) {
-        return NULL;
-    }
 
-    TreeNode *ans = tree->root;
+    TreeNode *ans = NULL;
     TreeNode *current = tree->root;
     while (current) {
-        if (key < current->key && current->key < ans->key) {
+        if (current->key > key) {
             ans = current;
+            current = current->left;
+        } else {
+            current = current->right;
         }
-        current = key >= current->key ? current->right : current->left;
     }
-    
-    if (ans->key == key) {
-        return NULL;
-    }
-
     return ans;
 }
 
 TreeNode *find_tree(const BST * const tree, const size_t key) {
-    if (!tree) {
+    if (!tree || !tree->root) {
         return NULL;
     }
     if (!key) {
         return NULL;
     }
 
-    return go_to_node(tree, key);
+    return go_to_node(tree->root, key);
 }
 
 TreeNode *find_release_tree(TreeNode * current, const size_t key, const size_t release) {
@@ -179,13 +176,15 @@ TreeNode *find_release_tree(TreeNode * current, const size_t key, const size_t r
         if (current->key == key && release == count) {
             return current;
         }
-        else if (!current->left) {
-            break;
-        }
-        else if (current->left->key == key) {
+        else if (current->left != NULL && current->left->key == key) {
             count++;
             current = current->left;
-        } else {
+        } 
+        else if (current->left != NULL && current->left->right != NULL && current->left->right->key == key){
+            count++;
+            current = current->left->right;
+        } 
+        else {
             break;
         }
     }
@@ -206,7 +205,7 @@ tree_err insert_tree(BST * const tree, const size_t key, Info * const info) {
         return TREE_MEM;
     }
 
-    TreeNode *current = go_to_leaf(tree, key);
+    TreeNode *current = go_to_leaf(tree->root, key);
 
     if (!current) {
         tree->root = new_node;
@@ -281,15 +280,15 @@ static void child_reattachment(BST * const tree, TreeNode * const current) {
 }
 
 tree_err delete_tree(BST * const tree, const size_t key) {
-    if (!tree) {
+    if (!tree || !tree->root) {
         return TREE_NULL;
     }
     if (!key) {
         return TREE_VAL;
     }
 
-    TreeNode *current = go_to_node(tree, key);
-    if (!current || current->key != key) {
+    TreeNode *current = go_to_node(tree->root, key);
+    if (!current) {
         return TREE_VAL;
     }
 
@@ -299,7 +298,7 @@ tree_err delete_tree(BST * const tree, const size_t key) {
 }
 
 tree_err traverse_tree(const BST * const tree) {
-    if (!tree) {
+    if (!tree || !tree->root) {
         return TREE_NULL;
     }
 
@@ -438,8 +437,9 @@ static tree_err read_node(BST * const tree, FILE * const file) {
     if (result == TREE_OK) {
         insert_tree(tree, key, info);
     }
-    
-    info_free(info);
+    else {
+        info_free(info);
+    }
 
     return result;
 }
