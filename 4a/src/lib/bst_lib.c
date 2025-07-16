@@ -89,7 +89,7 @@ void free_info(TreeNode * const node) {
 }
 
 void free_tree(BST * const tree) {
-    if (!tree || !tree->root) {
+    if (!tree) {
         return;
     }
 
@@ -332,10 +332,10 @@ static void add_nodes_edges(Agraph_t *g, TreeNode *node, Agnode_t *parent) {
         return;
     }
 
-    char id_str[20];
+    char id_str[32];
     snprintf(id_str, sizeof(id_str), "%p", (void*)node);
     Agnode_t *n = agnode(g, id_str, 1);
-    char key_str[20];
+    char key_str[32];
     snprintf(key_str, sizeof(key_str), "%zu", node->key);
     agsafeset(n, "label", key_str, "");
 
@@ -343,8 +343,40 @@ static void add_nodes_edges(Agraph_t *g, TreeNode *node, Agnode_t *parent) {
         agedge(g, parent, n, NULL, 1);
     }
 
-    add_nodes_edges(g, node->left, n);
-    add_nodes_edges(g, node->right, n);
+    // Левый ребенок
+    if (node->left) {
+        add_nodes_edges(g, node->left, n);
+    } else {
+        char fake_id[64];
+        snprintf(fake_id, sizeof(fake_id), "%p_L", (void*)node);
+        Agnode_t *fake = agnode(g, fake_id, 1);
+        agsafeset(fake, "label", "0", "");
+        agsafeset(fake, "style", "invis", "");
+        Agedge_t *edge = agedge(g, n, fake, NULL, 1);
+        agsafeset(edge, "style", "invis", "");
+    }
+
+    // Центральный ребенок (всегда фиктивный)
+    char fake_id_c[64];
+    snprintf(fake_id_c, sizeof(fake_id_c), "%p_C", (void*)node);
+    Agnode_t *fake_c = agnode(g, fake_id_c, 1);
+    agsafeset(fake_c, "label", "0", "");
+    agsafeset(fake_c, "style", "invis", "");
+    Agedge_t *edge_c = agedge(g, n, fake_c, NULL, 1);
+    agsafeset(edge_c, "style", "invis", "");
+
+    // Правый ребенок
+    if (node->right) {
+        add_nodes_edges(g, node->right, n);
+    } else {
+        char fake_id[64];
+        snprintf(fake_id, sizeof(fake_id), "%p_R", (void*)node);
+        Agnode_t *fake = agnode(g, fake_id, 1);
+        agsafeset(fake, "label", "0", "");
+        agsafeset(fake, "style", "invis", "");
+        Agedge_t *edge = agedge(g, n, fake, NULL, 1);
+        agsafeset(edge, "style", "invis", "");
+    }
 
     return;
 }
@@ -353,19 +385,12 @@ tree_err export_tree_svg(const BST * const tree, const char * const filename) {
     if (!tree || !tree->root) {
         return TREE_EMPTY;
     }
-/*
-    char *ext = strrchr(filename, '.');
-    char full_filename[256];
-
-    if (ext && strcmp(ext, ".svg") == 0) {
-        strncpy(full_filename, filename, sizeof(full_filename) - 1);
-        full_filename[sizeof(full_filename) - 1] = '\0';
-    } else {
-        snprintf(full_filename, sizeof(full_filename), "%s.svg", filename);
-    }
-*/
+    static unsigned long svg_export_counter = 0;
+    svg_export_counter++;
     GVC_t *gvc = gvContext();
-    Agraph_t *g = agopen("bst", Agdirected, NULL);
+    char graph_name[64];
+    snprintf(graph_name, sizeof(graph_name), "bst_%lu", svg_export_counter);
+    Agraph_t *g = agopen(graph_name, Agdirected, NULL);
     add_nodes_edges(g, tree->root, NULL);
     gvLayout(gvc, g, "dot");
     gvRenderFilename(gvc, g, "svg", filename);
