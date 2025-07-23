@@ -4,12 +4,13 @@
 #include "dialog.h"
 #include "testing.h"
 
-#define PROMPT_FOR_OPERATION "Choice operation: "
+#define OPERATION_PROMPT "Choice operation: "
+#define ERR_PROMPT "Error: Cannot create tree\n"
 
 int main(void) {
-    BST *tree = create_tree();
+    SGT *tree = create_tree();
     if (!tree) {
-        printf("Error: Cannot create tree\n");
+        printf(ERR_PROMPT);
         return 1;
     }
 
@@ -17,7 +18,7 @@ int main(void) {
     while (!end_program) {
         show_menu();
         size_t choice;
-        if (read_number(&choice, 0, 11, PROMPT_FOR_OPERATION) == TREE_EOF) {
+        if (read_number(&choice, 0, 11, OPERATION_PROMPT) == TREE_EOF) {
             free_tree(tree);
             return 1;
         }
