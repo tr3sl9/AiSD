@@ -23,7 +23,7 @@ SGT *create_tree() {
     }
     
     tree->root = NULL;
-    tree->alpha = 0.7;
+    tree->alpha = 0.5;
     return tree;
 }
 
