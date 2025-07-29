@@ -79,6 +79,7 @@ double measuring_time(SGT * const tree, char ** const key_arr, Info ** const inf
             clock_gettime(CLOCK_MONOTONIC, &tp_end);
             return time_delta(&tp_start, &tp_end);
     }
+
     return 0;
 }
 

@@ -321,11 +321,14 @@ static TreeNode *find_scapegoat(TreeNode * node, double alpha) {
     }
 
     while (node->parent) {
-        if (node->size > alpha * node->parent->size) {
+        size_t size_left = node->left ? node->left->size : 0;
+        size_t size_right = node->right ? node->right->size : 0;
+        if (size_left > alpha * node->size || size_right > alpha * node->size) {
             return node->parent;
         }
         node = node->parent;
     }
+
     return NULL;
 }
 
@@ -371,7 +374,7 @@ static char is_balanced(SGT * const tree, const size_t depth) {
         return 0;
     }
 
-    return depth > (size_t)(log(tree->size) / log(3/2)) ? 1 : 0;
+    return depth <= (size_t)(log(1 / tree->alpha) / log(tree->size)) ? 1 : 0;
 }
 
 static void update_size_after_insert(TreeNode * node) {
@@ -420,7 +423,7 @@ tree_err insert_tree(SGT * const tree, char * const key, Info * const info) {
 
     tree->size++;
 
-    if (is_balanced(tree, find_depth(new_node)) != 0) {
+    if (!is_balanced(tree, find_depth(new_node))) {
         TreeNode *scapegoat = find_scapegoat(new_node->parent, tree->alpha);
         if (scapegoat) {
             rebuild_subtree(tree, scapegoat);
