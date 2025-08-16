@@ -3,6 +3,7 @@
 #include <readline/readline.h>
 
 #include "../lib/libgraph.h"
+#include "../lib/hashtable.h"
 #include "dialog.h"
 #include "readnumber.h"
 
@@ -147,7 +148,6 @@ static graph_err dialog_delete_edge(Graph * const graph) {
     graph_err check_result = graph_get_edges_between(graph, src_id, dest_id, &edges, &count);
     
     if (check_result != GRAPH_OK || count == 0) {
-        printf("No edges found between '%s' and '%s'.\n", src_id, dest_id);
         graph_free_edges_list(edges);
         free(src_id);
         free(dest_id);
@@ -231,7 +231,6 @@ static graph_err dialog_update_edge(Graph * const graph) {
     graph_err check_result = graph_get_edges_between(graph, src_id, dest_id, &edges, &count);
     
     if (check_result != GRAPH_OK || count == 0) {
-        printf("No edges found between '%s' and '%s'.\n", src_id, dest_id);
         graph_free_edges_list(edges);
         free(src_id);
         free(dest_id);
@@ -244,7 +243,8 @@ static graph_err dialog_update_edge(Graph * const graph) {
         size_t new_length = 0;
         graph_err rn = read_positive_number(&new_length, PROMPT_FOR_NEW_LENGTH);
         if (rn != GRAPH_OK || new_length < 1) { 
-            free(src_id); free(dest_id); 
+            free(src_id); 
+            free(dest_id); 
             return rn != GRAPH_OK ? rn : GRAPH_VAL; 
         }
 
@@ -347,14 +347,14 @@ static graph_err dialog_create_mst(Graph * const graph) {
         return GRAPH_NULL;
     }
 
-    Graph* mst = mst_create(graph);
+    Graph *mst = mst_create(graph);
     if (!mst) {
         printf("Failed to create minimum spanning tree.\n");
         return GRAPH_MEM;
     }
 
-    graph_free(graph);
-    graph->vertices = mst->vertices; 
+    graph_free_vertices(graph);
+    graph->vertices = mst->vertices;
     free(mst);
     
     printf("Graph modified to minimum spanning tree successfully.\n");

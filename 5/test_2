@@ -1,0 +1,24 @@
+MAZE
+VERTEX a 0
+VERTEX b 2
+VERTEX c 2
+VERTEX d 2
+VERTEX e 1
+VERTEX f 1
+VERTEX g 2
+VERTEX h 2
+VERTEX i 1
+EDGE a h 8
+EDGE a b 4
+EDGE b c 8
+EDGE b h 11
+EDGE c d 7
+EDGE c f 4
+EDGE c i 2
+EDGE d e 9
+EDGE d f 14
+EDGE f e 10
+EDGE g f 2
+EDGE h g 1
+EDGE h i 7
+EDGE i g 6

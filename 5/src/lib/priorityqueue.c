@@ -60,7 +60,9 @@ char pq_insert(PriorityQueue * const pq, Vertex * const vertex, const size_t pri
         return 0;
     }
     
-    pq_resize(pq);  
+    if (pq->size == pq->capacity){
+        pq_resize(pq); 
+    }
 
     pq->nodes[pq->size].vertex = vertex;
     pq->nodes[pq->size].priority = priority;
@@ -89,7 +91,9 @@ void pq_heapify_down(PriorityQueue * const pq) {
             smallest = right;
         }
         
-        if (smallest == i) break;
+        if (smallest == i) {
+            break;
+        }
         
         PQNode temp = pq->nodes[i];
         pq->nodes[i] = pq->nodes[smallest];

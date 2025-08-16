@@ -13,6 +13,10 @@
 
 #define MAGIC_WORD "MAZE\n"
 
+static int cmp(const char * const str_1, const char * const str_2) {
+    return strcmp(str_1, str_2);
+}
+
 Graph* graph_create(void) {
     Graph *graph = (Graph*)calloc(1, sizeof(Graph));
     if (!graph) {
@@ -28,20 +32,30 @@ Graph* graph_create(void) {
     return graph;
 }
 
-void delete_incoming_vertices(Vertex * target) {
+void delete_vertex_edges(Vertex * target) {
+    if (!target) {
+        return;
+    }
+
     while (target->incoming_vertices) {
         Vertex *source = target->incoming_vertices->vertex;
 
-        Edge **p = &(source->edge);
-        while (*p) {
-            if ((*p)->dest == target) {
-                Edge *to_free = *p;
-                *p = to_free->next;
-                free(to_free);
+        Edge *prev = NULL;
+        Edge *current = source->edge;
+
+        while (current) {
+            if (current->dest == target) {
+                if (prev) {
+                    prev->next = current->next;
+                } else {
+                    source->edge = current->next;
+                }
+                free(current);
                 break;
             }
 
-            p = &((*p)->next);
+            prev = current;
+            current = current->next;
         }
 
         IncomingVertex *next_incoming = target->incoming_vertices->next;
@@ -52,7 +66,7 @@ void delete_incoming_vertices(Vertex * target) {
     return;
 }
 
-void delete_vertex_edges(Vertex * target) {
+void delete_incoming_vertices(Vertex * target) {
     if (!target) {
         return;
     }
@@ -60,16 +74,22 @@ void delete_vertex_edges(Vertex * target) {
     while (target->edge) {
         Vertex *neighbor = target->edge->dest;
         
-        IncomingVertex **p = &(neighbor->incoming_vertices);
-        while (*p) {
-            if ((*p)->vertex == target) {
-                IncomingVertex *to_free = *p;
-                *p = to_free->next;
-                free(to_free);
+        IncomingVertex *prev = NULL;
+        IncomingVertex *current = neighbor->incoming_vertices;
+
+        while (current) {
+            if (current->vertex == target) {
+                if (prev) {
+                    prev->next = current->next;
+                } else {
+                    neighbor->incoming_vertices = current->next;
+                }
+                free(current);
                 break;
             }
 
-            p = &((*p)->next);
+            prev = current;
+            current = current->next;
         }
         
         Edge *next_edge = target->edge->next;
@@ -148,20 +168,20 @@ graph_err graph_delete_vertex(Graph * const graph, const char * const id) {
         return GRAPH_VAL;
     }
 
-    delete_vertex_edges(target);
-
     delete_incoming_vertices(target);
+
+    delete_vertex_edges(target);
 
     table_err result = delete_vertex_table(graph->vertices, id);
 
     return (result == TABLE_OK) ? GRAPH_OK : GRAPH_VAL;
 }
 
-void graph_free(Graph * const graph) {
+void graph_free_vertices(Graph * const graph) {
     if (!graph) {
         return;
     }
-    
+
     if (graph->vertices) {
         for (size_t i = 0; i < graph->vertices->msize; i++) {
             if (graph->vertices->ks[i].busy == BUSY && graph->vertices->ks[i].vertex) {
@@ -170,6 +190,16 @@ void graph_free(Graph * const graph) {
         }
         table_free(graph->vertices);
     }
+
+    return;
+
+}
+void graph_free(Graph * const graph) {
+    if (!graph) {
+        return;
+    }
+    
+    graph_free_vertices(graph);
 
     free(graph);
 
@@ -258,7 +288,7 @@ static Edge* find_edge_by_length(Vertex *src, Vertex *dest, size_t length) {
     return NULL;
 }
 
-static void remove_edge_from_list(Vertex *src, Edge *edge_to_remove) {
+static void delete_edge_from_list(Vertex *src, Edge *edge_to_remove) {
     if (!src || !edge_to_remove) {
         return;
     }
@@ -282,7 +312,7 @@ static void remove_edge_from_list(Vertex *src, Edge *edge_to_remove) {
     return;
 }
 
-static void remove_incoming_vertex(Vertex *dest, Vertex *src) {
+static void delete_incoming_vertex(Vertex *dest, Vertex *src) {
     if (!dest || !src) {
         return;
     }
@@ -324,8 +354,8 @@ graph_err graph_delete_edge(Graph * const graph, const char * const src_id, cons
         return GRAPH_VAL;
     }
     
-    remove_edge_from_list(src, edge);
-    remove_incoming_vertex(dest, src);
+    delete_edge_from_list(src, edge);
+    delete_incoming_vertex(dest, src);
     free(edge);
     
     return GRAPH_OK;
@@ -369,8 +399,9 @@ graph_err graph_delete_edge_by_length(Graph * const graph, const char * const sr
         return GRAPH_VAL;
     }
     
-    remove_edge_from_list(src, edge);
-    remove_incoming_vertex(dest, src);
+    delete_edge_from_list(src, edge);
+
+    delete_incoming_vertex(dest, src);
     free(edge);
     
     return GRAPH_OK;
@@ -501,7 +532,7 @@ static Path* path_create(void) {
     return (Path*)calloc(1, sizeof(Path));
 }
 
-static long find_vertex_index_arr(Vertex** vertices_arr, size_t vertex_count, Vertex* target) {
+static long find_vertex_index_arr(Vertex * const * const vertices_arr, size_t vertex_count, Vertex * const target) {
     if (!vertices_arr || !target) {
         return -1;
     }
@@ -602,12 +633,10 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
 
         visited_vertices[min_index] = 1;
 
-        // Если достигли конечной вершины, можно завершить
         if (min_index == end_index) {
             break;
         }
 
-        // Для каждой вершины v ∈ Adj[u] (соседи u)
         for (Edge *edge = min->edge; edge != NULL; edge = edge->next) {
             Vertex *vertex = edge->dest;
             long vertex_index = find_vertex_index_arr(vertices_arr, vertex_count, vertex);
@@ -615,12 +644,11 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
                 continue;
             }
 
-            // Relax(u, v, w): if d[v] > d[u] + w(u, v)
+            // Relax
             if (d[min_index] != SIZE_MAX && ((d[min_index] + edge->length) < d[vertex_index])) {
-                d[vertex_index] = d[min_index] + edge->length;  // d[v] = d[u] + w(u, v)
-                pred[vertex_index] = min_index;                  // pred[v] = u
+                d[vertex_index] = d[min_index] + edge->length;
+                pred[vertex_index] = min_index;
                 
-                // Обновляем приоритет в очереди через decrease_key
                 pq_decrease_key(pq, vertex, d[vertex_index]);
             }
         }
@@ -748,7 +776,7 @@ static graph_err graphviz_add_vertices(Agraph_t *g, Graph * const graph) {
                 switch (vertex->type) {
                     case ROOM_ENTRANCE: color = "green"; break;
                     case ROOM_EXIT: color = "red"; break;
-                    case ROOM_TRANSITION: color = "blue"; break;
+                    case ROOM_TRANSITION: color = ""; break;
                 }
                 
                 agsafeset(node, "color", color, "");
@@ -835,6 +863,10 @@ typedef struct UFNode {
 } UFNode;
 
 static size_t mst_find(UFNode * const uf_nodes, size_t x) {
+    if (!uf_nodes) {
+        return 0;
+    } 
+
     if (uf_nodes[x].parent != x) {
         uf_nodes[x].parent = mst_find(uf_nodes, uf_nodes[x].parent);
     }
@@ -843,8 +875,13 @@ static size_t mst_find(UFNode * const uf_nodes, size_t x) {
 }
 
 static void mst_unite(UFNode * const uf_nodes, size_t x, size_t y) {
+    if (!uf_nodes) {
+        return;
+    }
+
     size_t root_x = mst_find(uf_nodes, x);
     size_t root_y = mst_find(uf_nodes, y);
+
     if (root_x != root_y) {
         if (uf_nodes[root_x].rank < uf_nodes[root_y].rank) {
             uf_nodes[root_x].parent = root_y;
@@ -860,8 +897,12 @@ static void mst_unite(UFNode * const uf_nodes, size_t x, size_t y) {
 }
 
 static size_t mst_find_vertex_index(UFNode * const uf_nodes, size_t vertex_count, const char * const id) {
+    if (!uf_nodes || !id) {
+        return 0;
+    }
+
     for (size_t i = 0; i < vertex_count; i++) {
-        if (strcmp(uf_nodes[i].id, id) == 0) {
+        if (!cmp(uf_nodes[i].id, id)) {
             return i;
         }
     }
@@ -890,9 +931,9 @@ Graph* mst_create(Graph * const graph) {
         size_t length;
     } EdgeInfo;
 
-    EdgeInfo *edges = NULL;
+    EdgeInfo *edges = (EdgeInfo*)calloc(10, sizeof(EdgeInfo));
     size_t edge_count = 0;
-    size_t edge_capacity = 0;
+    size_t edge_capacity = 10;
 
     for (size_t i = 0; i < graph->vertices->msize; i++) {
         if (graph->vertices->ks[i].busy == BUSY && graph->vertices->ks[i].vertex) {
@@ -900,19 +941,8 @@ Graph* mst_create(Graph * const graph) {
             Edge *edge = vertex->edge;
             while (edge) {
                 if (edge_count >= edge_capacity) {
-                    edge_capacity = edge_capacity == 0 ? 10 : edge_capacity * 2;
-                    EdgeInfo *new_edges = (EdgeInfo*)realloc(edges, edge_capacity * sizeof(EdgeInfo));
-                    if (!new_edges) {
-                        for (size_t j = 0; j < edge_count; j++) {
-                            free(edges[j].src_id);
-                            free(edges[j].dest_id);
-                        }
-                        free(edges);
-                        graph_free(mst);
-                        return NULL;
-                    }
-
-                    edges = new_edges;
+                    edge_capacity = edge_capacity * 2;
+                    edges = (EdgeInfo*)realloc(edges, edge_capacity * sizeof(EdgeInfo));
                 }
 
                 edges[edge_count].src_id = strdup(vertex->id);
@@ -941,7 +971,7 @@ Graph* mst_create(Graph * const graph) {
         }
     }
 
-    UFNode* uf_nodes = malloc(vertex_count * sizeof(UFNode));
+    UFNode *uf_nodes = (UFNode*)calloc(vertex_count, sizeof(UFNode));
     if (!uf_nodes) {
         for (size_t j = 0; j < edge_count; j++) {
             free(edges[j].src_id);

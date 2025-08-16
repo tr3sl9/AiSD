@@ -48,6 +48,7 @@ Graph* graph_create(void);
 Graph* graph_load_from_file(const char * const filename);
 
 void graph_free(Graph * const graph);
+void graph_free_vertices(Graph * const graph);
 void delete_incoming_vertices(Vertex * target);
 void delete_vertex_edges(Vertex * target);
 void free_incoming_vertices(IncomingVertex * incoming_vertices);
