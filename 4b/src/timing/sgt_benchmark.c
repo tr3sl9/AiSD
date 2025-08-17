@@ -113,10 +113,23 @@ double iteration_delete_tree(SGT * const tree, char ** const key_arr) {
     return measuring_time(tree, key_arr, NULL, NULL, delete);
 }
 
-int main() {
-    FILE *file = fopen("sgt_benchmark.csv", "w");
+int main(int argc, char *argv[]) {
+    if (argc != 2) {
+        printf("Usage: %s <alpha>\nWhere alpha is a number between 0.5 and 1.0 (exclusive)\n", argv[0]);
+        return 1;
+    }
 
-    SGT *tree = create_tree();
+    double alpha = atof(argv[1]);
+    if (alpha < 0.5 || alpha >= 1.0) {
+        printf("Error: Alpha must be between 0.5 and 1.0 (exclusive)\n");
+        return 1;
+    }
+
+    char filename[256];
+    snprintf(filename, sizeof(filename), "sgt_benchmark_alpha_%.2f.csv", alpha);
+    FILE *file = fopen(filename, "w");
+
+    SGT *tree = create_tree(alpha);
     if (!tree) {
         printf("Memory allocation failed\n");
         return 1;
@@ -183,6 +196,6 @@ int main() {
     
     free_tree(tree);
     fclose(file);
-    printf("Все тесты завершены. Результаты сохранены в sgt_benchmark.csv\n");
+    printf("Все тесты завершены. Результаты сохранены в %s\n", filename);
     return 0;
 }

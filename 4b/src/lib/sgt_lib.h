@@ -35,7 +35,7 @@ typedef struct {
 } SGT;
 
 
-SGT* create_tree();
+SGT* create_tree(const double alpha);
 
 TreeNode *go_to_node(TreeNode * const node, const char * const key);
 TreeNode *find_tree(const SGT * const, const char * const key);

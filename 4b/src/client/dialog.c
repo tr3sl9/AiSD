@@ -1,5 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+
 #include <readline/readline.h>
 #include "../lib/sgt_lib.h"
 #include "dialog.h"
@@ -69,25 +71,26 @@ static TreeNode *search_key_release(TreeNode * const node, size_t * const need_r
         return NULL;
     }
 
-    TreeNode *release_node = NULL;
-    if (go_to_node(node->left, node->key) != NULL || go_to_node(node->right, node->key) != NULL) {
-        printf("The element with this key is not the only one. Specify release\n");
-        
+    size_t temp_release = 0;
+    find_release_tree(node, node->key, &temp_release, INT_MAX); 
+    
+    if (temp_release > 1) {
         if (read_positive_number(need_release, PROMPT_FOR_RELEASE) == TREE_EOF) {
             return NULL;
         }
         
         size_t current_release = 0;
-        release_node = find_release_tree(node, node->key, &current_release, *need_release);
+        TreeNode *release_node = find_release_tree(node, node->key, &current_release, *need_release);
         if (!release_node) {
             return NULL;
         }
-    }
-    else {
+        return release_node;
+    } else {
         *need_release = 1;
+        return node;
     }
-    
-    return release_node;
+
+    return NULL;
 }
 
 static tree_err dialog_find(SGT * const tree) {
@@ -105,9 +108,16 @@ static tree_err dialog_find(SGT * const tree) {
     }
 
     TreeNode *node = find_tree(tree, key);
-    if (!node || cmp(node->key, key) != 0) {
+    if (!node) {
         free(key);
         return TREE_VAL;
+    }
+
+    size_t temp_release = 0;
+    find_release_tree(tree->root, key, &temp_release, INT_MAX); 
+
+    if (temp_release > 1) {
+        printf("The element with this key is not the only one. Specify release\n");
     }
 
     size_t release = 1;
@@ -141,7 +151,13 @@ static tree_err dialog_special_find(SGT * const tree) {
         return TREE_VAL;
     }
 
-    printf("\nFound element with key %s with info %s\nChecking if he's not the only one.\n", node->key, node->info->info);
+    size_t temp_release = 0;
+    find_release_tree(tree->root, node->key, &temp_release, INT_MAX);
+    
+    if (temp_release > 1) {
+        printf("The element with this key is not the only one. Specify release\n");
+    }
+
     size_t release = 1;
     TreeNode *release_node = search_key_release(node, &release);
     if (!release_node) {

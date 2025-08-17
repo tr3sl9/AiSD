@@ -16,14 +16,14 @@ int cmp(const char * const str_1, const char * const str_2) {
     return strcmp(str_1, str_2);
 }
 
-SGT *create_tree() {
+SGT *create_tree(const double alpha) {
     SGT *tree = calloc(1, sizeof(SGT));
     if (!tree) {
         return NULL;
     }
     
     tree->root = NULL;
-    tree->alpha = 0.5;
+    tree->alpha = alpha;
     return tree;
 }
 
@@ -54,20 +54,16 @@ TreeNode *go_to_node(TreeNode * const node, const char * const key) {
         return NULL;
     }
     
-    TreeNode *current_parent = NULL;
     TreeNode *current = node;
     while (current) {
-        current_parent = current;
-        if (key && current->key && !cmp(key, current->key)) {
-            break;
+        int comparison = cmp(key, current->key);
+        if (comparison == 0) {
+            return current;
         }
-        current = cmp(key, current->key) < 0 ? current->left : current->right;
+        current = comparison < 0 ? current->left : current->right;
     }
-    
-    if (current_parent != NULL && current_parent->key && key && cmp(current_parent->key, key) != 0) {
-        return NULL;
-    }
-    return current_parent;
+
+    return NULL;
 }
 
 static TreeNode *create_tree_node(char * const key, Info * const info) {
@@ -153,16 +149,19 @@ TreeNode *find_release_tree(TreeNode * current, const char * const key, size_t *
         return NULL;
     }
 
-    (*current_release)++;
-    if (!cmp(current->key, key) && *current_release == need_release) {
-        return current;
-    }
-    
     TreeNode *found;
     found = find_release_tree(current->left, key, current_release, need_release);
     if (found) {
         return found;
     }
+    
+    if (!cmp(current->key, key)) {
+        (*current_release)++;
+        if (*current_release == need_release) {
+            return current;
+        }
+    }
+    
     found = find_release_tree(current->right, key, current_release, need_release);
     if (found) {
         return found;
