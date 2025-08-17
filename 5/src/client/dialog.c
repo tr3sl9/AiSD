@@ -333,7 +333,7 @@ static graph_err dialog_find_shortest_path(Graph * const graph) {
         printf("\nTotal distance: %zu\n", path->total_dist);
         path_free(path);
     } else {
-        printf("No path found from '%s' to '%s'.\n", start_id, end_id);
+        printf("No path found from '%s' to '%s'. Path does not exist.\n", start_id, end_id);
     }
 
     free(start_id);

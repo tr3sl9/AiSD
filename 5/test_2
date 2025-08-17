@@ -8,6 +8,8 @@ VERTEX f 1
 VERTEX g 2
 VERTEX h 2
 VERTEX i 1
+VERTEX s 0
+VERTEX z 1
 EDGE a h 8
 EDGE a b 4
 EDGE b c 8
@@ -22,3 +24,5 @@ EDGE g f 2
 EDGE h g 1
 EDGE h i 7
 EDGE i g 6
+EDGE z s 12
+EDGE a b 1

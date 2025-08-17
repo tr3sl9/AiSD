@@ -64,6 +64,10 @@ char pq_insert(PriorityQueue * const pq, Vertex * const vertex, const size_t pri
         pq_resize(pq); 
     }
 
+    if (!pq->nodes) {
+        return 0;
+    }
+
     pq->nodes[pq->size].vertex = vertex;
     pq->nodes[pq->size].priority = priority;
     pq->size++;
@@ -74,7 +78,7 @@ char pq_insert(PriorityQueue * const pq, Vertex * const vertex, const size_t pri
 }
 
 void pq_heapify_down(PriorityQueue * const pq) {
-    if (!pq) {
+    if (!pq || !pq->nodes || pq->size == 0) {
         return;
     }
 
@@ -105,7 +109,7 @@ void pq_heapify_down(PriorityQueue * const pq) {
 }
 
 Vertex* pq_extract_min(PriorityQueue * const pq) {
-    if (!pq || pq->size == 0) {
+    if (!pq || !pq->nodes || pq->size == 0) {
         return NULL;
     }
     
@@ -132,7 +136,7 @@ int pq_is_empty(const PriorityQueue* pq) {
 }
 
 int pq_decrease_key(PriorityQueue* pq, Vertex* vertex, size_t new_priority) {
-    if (!pq || !vertex) {
+    if (!pq || !vertex || pq->size == 0) {
         return 0;
     }
     
@@ -144,7 +148,7 @@ int pq_decrease_key(PriorityQueue* pq, Vertex* vertex, size_t new_priority) {
     }
     
     if (i >= pq->size) {
-        return 0;  
+        return 0;
     }
 
     if (new_priority >= pq->nodes[i].priority) {

@@ -138,10 +138,10 @@ graph_err graph_add_vertex(Graph * const graph, const char * const id, RoomType 
         return GRAPH_VAL;
     }
     
-    Vertex *existing = graph_find_vertex(graph, id);
-    if (existing) {
-        return GRAPH_ALREADY_EXISTS;
-    }
+//    Vertex *existing = graph_find_vertex(graph, id);
+//    if (existing) {
+//        return GRAPH_ALREADY_EXISTS;
+//    }
     
     Vertex *vertex = vertex_create(id, type);
     if (!vertex) {
@@ -486,7 +486,7 @@ graph_err dfs_find_exit(Graph * const graph, const char * const start_id) {
     }
 
     Vertex *start = graph_find_vertex(graph, start_id);
-    if (!start) {
+    if (!start || start->type != ROOM_ENTRANCE) {
         return GRAPH_VAL;
     }
 
@@ -552,11 +552,11 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
     }
     
     Vertex *start = graph_find_vertex(graph, start_id);
-    if (!start) {
+    if (!start || start->type != ROOM_ENTRANCE) {
         return NULL;
     }
     Vertex *end = graph_find_vertex(graph, end_id);
-    if (!end) {
+    if (!end || end->type != ROOM_EXIT) {
         return NULL;
     }
 
@@ -611,7 +611,13 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
 
     // Добавляем все вершины в очередь с приоритетом d[v]
     for (size_t i = 0; i < vertex_count; i++) {
-        pq_insert(pq, vertices_arr[i], d[i]);
+        if (!pq_insert(pq, vertices_arr[i], d[i])) {
+            pq_free(pq);
+            free(vertices_arr); 
+            free(d); 
+            free(pred); 
+            return NULL;
+        }
     }
 
     char *visited_vertices = (char*)calloc(vertex_count, sizeof(char));
@@ -626,8 +632,16 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
     while (!pq_is_empty(pq)) {
 
         Vertex *min = pq_extract_min(pq);
+        if (!min) {
+            continue;
+        }
+        
         long min_index = find_vertex_index_arr(vertices_arr, vertex_count, min);
         if (min_index < 0) {
+            continue;
+        }
+
+        if (visited_vertices[min_index]) {
             continue;
         }
 
@@ -637,23 +651,33 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
             break;
         }
 
-        for (Edge *edge = min->edge; edge != NULL; edge = edge->next) {
-            Vertex *vertex = edge->dest;
-            long vertex_index = find_vertex_index_arr(vertices_arr, vertex_count, vertex);
-            if (vertex_index < 0) {
-                continue;
-            }
-
-            // Relax
-            if (d[min_index] != SIZE_MAX && ((d[min_index] + edge->length) < d[vertex_index])) {
-                d[vertex_index] = d[min_index] + edge->length;
-                pred[vertex_index] = min_index;
+        if (min->edge) {
+            for (Edge *edge = min->edge; edge != NULL; edge = edge->next) {
+                if (!edge || !edge->dest) {
+                    continue;
+                }
                 
-                pq_decrease_key(pq, vertex, d[vertex_index]);
+                Vertex *vertex = edge->dest;
+                long vertex_index = find_vertex_index_arr(vertices_arr, vertex_count, vertex);
+                if (vertex_index < 0) {
+                    continue;
+                }
+
+                // Relax
+                if (d[min_index] != SIZE_MAX && ((d[min_index] + edge->length) < d[vertex_index])) {
+                    d[vertex_index] = d[min_index] + edge->length;
+                    pred[vertex_index] = min_index;
+                    
+                    if (!visited_vertices[vertex_index]) {
+                        pq_decrease_key(pq, vertex, d[vertex_index]);
+                    }
+                }
             }
         }
     }
 
+    Path* path = NULL;
+    
     if (d[end_index] == SIZE_MAX) {
         goto exit_with_free;
     }
@@ -663,7 +687,7 @@ Path* dijkstra_find_path(Graph * const graph, const char * const start_id, const
         path_len++;
     }
 
-    Path* path = path_create();
+    path = path_create();
     if (!path) { 
         goto exit_with_free;
     }
